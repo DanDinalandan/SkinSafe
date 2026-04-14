@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand greens -->
+    <color name="green_primary">#527860</color>
+    <color name="green_dark">#1B4332</color>
+    <color name="green_medium">#40916C</color>
+    <color name="green_light">#E8F5E9</color>
+    <color name="green_accent">#52B788</color>
+    <color name="green_text_on_dark">#B2DFDB</color>
+
+    <!-- Safety colors -->
+    <color name="safe_green">#2E7D32</color>
+    <color name="safe_bg">#E8F5E9</color>
+    <color name="caution_orange">#E65100</color>
+    <color name="caution_bg">#FFF3E0</color>
+    <color name="harmful_red">#C62828</color>
+    <color name="harmful_bg">#FFEBEE</color>
+
+    <!-- Text -->
+    <color name="text_primary">#1A1A1A</color>
+    <color name="text_secondary">#666666</color>
+    <color name="text_hint">#AAAAAA</color>
+    <color name="text_white">#FFFFFF</color>
+
+    <!-- UI surfaces -->
+    <color name="background">#F5F5F0</color>
+    <color name="surface_white">#FFFFFF</color>
+    <color name="divider">#EEEEEE</color>
+    <color name="avatar_yellow">#F5C842</color>
+    <color name="scanner_overlay">#88000000</color>
+
+    <!-- Material theme required -->
+    <color name="colorPrimary">#2E6B3E</color>
+    <color name="colorPrimaryVariant">#1B4332</color>
+    <color name="colorOnPrimary">#FFFFFF</color>
+    <color name="colorSecondary">#52B788</color>
+    <color name="colorSecondaryVariant">#40916C</color>
+    <color name="colorOnSecondary">#FFFFFF</color>
+    <color name="colorError">#E53935</color>
+    <color name="colorOnError">#FFFFFF</color>
+    <color name="colorBackground">#F5F5F0</color>
+    <color name="colorOnBackground">#1A1A1A</color>
+    <color name="colorSurface">#FFFFFF</color>
+    <color name="colorOnSurface">#1A1A1A</color>
+</resources>

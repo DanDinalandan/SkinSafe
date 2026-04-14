@@ -1,0 +1,121 @@
+<resources>
+    <string name="app_name">SkinSafe</string>
+    <string name="tagline">SKINCARE INTELLIGENCE</string>
+    <string name="splash_message">Know what\'s in your skincare.\nStay safe, stay beautiful.</string>
+
+    <!-- Login -->
+    <string name="welcome_back">Welcome back</string>
+    <string name="sign_in_subtitle">Sign in to your SkinSafe account</string>
+    <string name="email_address">EMAIL ADDRESS</string>
+    <string name="password">PASSWORD</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="sign_in">Sign In</string>
+    <string name="no_account">Don\'t have an account?</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="or_continue_with">or continue with</string>
+
+    <!-- Sign Up -->
+    <string name="create_account">Create Account</string>
+    <string name="signup_subtitle">Tell us about your skin to personalize results</string>
+    <string name="first_name">FIRST NAME</string>
+    <string name="last_name">LAST NAME</string>
+    <string name="email">EMAIL</string>
+    <string name="skin_type">SKIN TYPE</string>
+    <string name="already_have_account">Already have an account?</string>
+
+    <!-- Home -->
+    <string name="quick_actions">Quick Actions</string>
+    <string name="scan_product">Scan Product</string>
+    <string name="my_favorites">My Favorites</string>
+    <string name="type_manually">Type Manually</string>
+    <string name="voice_input">Voice Input</string>
+    <string name="recent_scans">Recent Scans</string>
+    <string name="see_all">See all</string>
+    <string name="use_camera">Use camera to scan</string>
+    <string name="saved_products">Saved products</string>
+    <string name="type_ingredients">Type ingredients</string>
+    <string name="speak_ingredients">Speak ingredients</string>
+
+    <!-- Scan -->
+    <string name="scan_title">Scan Product</string>
+    <string name="position_label">Position ingredient label inside frame</string>
+    <string name="analyze_btn">✓ Analyze Ingredients</string>
+    <string name="product_name_hint">e.g. Night Moisturizer</string>
+    <string name="ingredients_hint">e.g. Water, Niacinamide, Zinc PCA, Glycerin, Phenoxyethanol…</string>
+    <string name="voice_tap_hint">Tap the microphone to start</string>
+    <string name="voice_listening">Listening… say ingredient names</string>
+    <string name="voice_detected">Detected:</string>
+
+    <!-- Results -->
+    <string name="save_product">Save Product</string>
+    <string name="saved">✓ Saved</string>
+    <string name="safe_label">SAFE</string>
+    <string name="caution_label">CAUTION</string>
+    <string name="harmful_label">HARMFUL</string>
+    <string name="ai_insight_title">🤖 AI INSIGHT</string>
+    <string name="ingredient_breakdown">Ingredient Breakdown</string>
+    <string name="tap_for_details">Tap any ingredient for more details</string>
+
+    <!-- Profile -->
+    <string name="my_skin_profile">MY SKIN PROFILE</string>
+    <string name="settings">SETTINGS</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="notifications">🔔 Notifications</string>
+    <string name="privacy_safety">🔒 Privacy &amp; Safety</string>
+    <string name="help_support">❓ Help &amp; Support</string>
+    <string name="sign_out">↩ Sign Out</string>
+    <string name="scans_label">Scans</string>
+    <string name="flagged_label">Flagged</string>
+
+    <!-- History -->
+    <string name="history_title">Scan History</string>
+    <string name="no_scans_yet">No scans yet.\nTap Scan to analyze your first product!</string>
+    <string name="long_press_delete">Long-press any item to delete it</string>
+
+    <!-- Dialogs -->
+    <string name="close">Close</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="save">Save</string>
+    <string name="what_it_does">WHAT IT DOES</string>
+    <string name="risk_note">RISK NOTE</string>
+    <string name="ai_explanation">🤖 AI EXPLANATION</string>
+    <string name="edit_skin_profile">Edit Skin Profile</string>
+    <string name="skin_types_label">SKIN TYPES</string>
+    <string name="preferences_label">PREFERENCES / CONCERNS</string>
+
+    <!-- Skin types -->
+    <string name="oily">Oily</string>
+    <string name="dry">Dry</string>
+    <string name="combination">Combination</string>
+    <string name="sensitive">Sensitive</string>
+    <string name="normal">Normal</string>
+    <string name="no_fragrance">No Fragrance</string>
+    <string name="avoid_parabens">Avoid Parabens</string>
+    <string name="acne_prone">Acne-prone</string>
+
+    <!-- Nav -->
+    <string name="nav_home">Home</string>
+    <string name="nav_search">Search</string>
+    <string name="nav_scan">Scan</string>
+    <string name="nav_history">History</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Errors / messages -->
+    <string name="error_email_required">Email is required</string>
+    <string name="error_invalid_email">Enter a valid email address</string>
+    <string name="error_password_required">Password is required</string>
+    <string name="error_password_short">Password must be at least 6 characters</string>
+    <string name="error_first_name">First name is required</string>
+    <string name="error_last_name">Last name is required</string>
+    <string name="error_email_taken">This email is already registered</string>
+    <string name="error_invalid_credentials">Invalid email or password. Please try again.</string>
+    <string name="error_no_ingredients">No ingredients could be parsed. Please check the text.</string>
+    <string name="error_camera_permission">Camera permission is required to scan products.</string>
+    <string name="error_mic_permission">Microphone permission is required for voice input.</string>
+    <string name="msg_account_created">Account created! Welcome</string>
+    <string name="msg_profile_updated">Profile updated!</string>
+    <string name="msg_scan_saved">Product saved!</string>
+    <string name="msg_scan_removed">Removed from saved.</string>
+    <string name="msg_scan_deleted">Scan deleted.</string>
+</resources>
