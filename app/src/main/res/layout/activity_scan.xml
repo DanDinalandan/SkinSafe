@@ -52,7 +52,7 @@
         android:orientation="horizontal"
         android:paddingHorizontal="20dp"
         android:paddingTop="20dp"
-        android:paddingBottom="24dp">
+        android:paddingBottom="16dp">
 
         <Button
             android:id="@+id/btn_tab_camera"
@@ -61,12 +61,12 @@
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
             android:background="@drawable/bg_setting_item"
+            app:backgroundTint="@null"
             android:text="Camera"
             android:textAllCaps="false"
             android:textColor="#4E735B"
             android:textSize="14sp"
-            android:textStyle="bold"
-            app:backgroundTint="@null"/>
+            android:textStyle="bold" />
 
         <Button
             android:id="@+id/btn_tab_manual"
@@ -75,12 +75,12 @@
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
             android:background="@drawable/bg_setting_item"
+            app:backgroundTint="@null"
             android:text="Manual"
             android:textAllCaps="false"
             android:textColor="#4E735B"
             android:textSize="14sp"
-            android:textStyle="bold"
-            app:backgroundTint="@null"/>
+            android:textStyle="bold" />
 
         <Button
             android:id="@+id/btn_tab_voice"
@@ -88,18 +88,39 @@
             android:layout_height="48dp"
             android:layout_weight="1"
             android:background="@drawable/bg_setting_item"
+            app:backgroundTint="@null"
             android:text="Voice"
             android:textAllCaps="false"
             android:textColor="#4E735B"
             android:textSize="14sp"
-            android:textStyle="bold"
-            app:backgroundTint="@null"/>
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/global_input_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tabs_layout"
+        android:paddingHorizontal="20dp"
+        android:paddingBottom="12dp">
+
+        <EditText
+            android:id="@+id/et_product_name"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@drawable/bg_setting_item"
+            android:hint="Product Name (Optional)"
+            android:paddingHorizontal="16dp"
+            android:textColor="#1A1A1A"
+            android:textColorHint="#B0BEC5"
+            android:textSize="15sp"
+            android:singleLine="true" />
     </LinearLayout>
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/tabs_layout"
+        android:layout_below="@id/global_input_layout"
         android:paddingHorizontal="20dp">
 
         <LinearLayout
@@ -180,28 +201,6 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp"
                     android:letterSpacing="0.05"
-                    android:text="PRODUCT NAME"
-                    android:textColor="#546E7A"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-
-                <EditText
-                    android:id="@+id/et_product_name"
-                    android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:layout_marginBottom="20dp"
-                    android:background="@drawable/bg_setting_item"
-                    android:hint="Optional name..."
-                    android:paddingHorizontal="16dp"
-                    android:textColor="#1A1A1A"
-                    android:textColorHint="#B0BEC5"
-                    android:textSize="15sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:letterSpacing="0.05"
                     android:text="INGREDIENT LIST"
                     android:textColor="#546E7A"
                     android:textSize="11sp"
@@ -210,7 +209,7 @@
                 <EditText
                     android:id="@+id/et_ingredients"
                     android:layout_width="match_parent"
-                    android:layout_height="240dp"
+                    android:layout_height="280dp"
                     android:layout_marginBottom="24dp"
                     android:background="@drawable/bg_setting_item"
                     android:gravity="top|start"
@@ -250,22 +249,36 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:layout_marginBottom="32dp"
+                android:layout_marginBottom="24dp"
                 android:gravity="center"
                 android:lineSpacingExtra="6dp"
                 android:text="Tap the microphone and say ingredient names separated by commas"
                 android:textColor="#546E7A"
                 android:textSize="16sp" />
 
-            <Button
+            <ImageButton
                 android:id="@+id/btn_voice_start"
                 android:layout_width="96dp"
                 android:layout_height="96dp"
-                android:layout_marginBottom="32dp"
+                android:layout_marginBottom="16dp"
                 android:background="@drawable/button_green"
                 android:backgroundTint="#4E735B"
-                android:text="🎤"
-                android:textSize="36sp" />
+                android:src="@drawable/ic_voice"
+                android:scaleType="centerInside"
+                android:padding="12dp"
+                app:tint="#FFFFFF" />
+
+            <Button
+                android:id="@+id/btn_voice_clear"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginBottom="16dp"
+                android:background="@android:color/transparent"
+                android:text="↺ Clear"
+                android:textAllCaps="false"
+                android:textColor="#D32F2F"
+                android:textSize="14sp"
+                android:visibility="gone" />
 
             <LinearLayout
                 android:id="@+id/layout_voice_result"
@@ -282,18 +295,16 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp"
                     android:letterSpacing="0.05"
-                    android:text="DETECTED TEXT:"
+                    android:text="DETECTED INGREDIENTS:"
                     android:textColor="#9E9E9E"
                     android:textSize="11sp"
                     android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/tv_voice_result"
+                <LinearLayout
+                    android:id="@+id/ll_voice_ingredients"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:lineSpacingExtra="4dp"
-                    android:textColor="#1A1A1A"
-                    android:textSize="15sp" />
+                    android:orientation="vertical" />
             </LinearLayout>
 
             <Button

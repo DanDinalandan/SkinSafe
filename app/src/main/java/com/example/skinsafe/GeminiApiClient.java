@@ -24,7 +24,7 @@ public class GeminiApiClient {
     private static final String TAG = "GeminiApiClient";
 
     // Replace with your key from https://aistudio.google.com (free)
-    private static final String API_KEY = "KEY";
+    private static final String API_KEY = "AIzaSyD08KlhGyijFe4KcgMu9Z4iMEva69Y8-mA";
 
     private static final String BASE_URL =
             "https://generativelanguage.googleapis.com/v1beta/models/" +

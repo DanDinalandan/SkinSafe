@@ -74,6 +74,13 @@ public class ResultsActivity extends AppCompatActivity {
 
         btnSave = findViewById(R.id.btn_save);
         btnSave.setOnClickListener(v -> toggleSave());
+
+        Button btnEdit = findViewById(R.id.btn_edit);
+        btnEdit.setOnClickListener(v -> {
+            Intent intent = new Intent(ResultsActivity.this, EditScanActivity.class);
+            intent.putExtra("scan_id", scanId);
+            startActivity(intent);
+        });
     }
 
     private void loadScanData(int scanId, String productName, String aiInsight) {

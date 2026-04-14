@@ -28,7 +28,7 @@ public class SearchActivity extends AppCompatActivity {
     private View viewSafetyDot;
     private ProgressBar progressAi;
 
-    private View navHome, navSearch, navScan, navHistory, navProfile;
+    private View navHome, navSearch, navScan, navSaved, navProfile;
 
     private SafetyClassifier classifier;
     private GeminiApiClient geminiClient;
@@ -68,7 +68,7 @@ public class SearchActivity extends AppCompatActivity {
         navHome = findViewById(R.id.nav_home);
         navSearch = findViewById(R.id.nav_search);
         navScan = findViewById(R.id.nav_scan);
-        navHistory = findViewById(R.id.nav_history);
+        navSaved = findViewById(R.id.nav_saved);
         navProfile = findViewById(R.id.nav_profile);
     }
 
@@ -116,7 +116,7 @@ public class SearchActivity extends AppCompatActivity {
             i.putExtra("input_mode", "camera");
             startActivity(i);
         });
-        navHistory.setOnClickListener(v -> { startActivity(new Intent(this, HistoryActivity.class)); });
+        navSaved.setOnClickListener(v -> { startActivity(new Intent(this, SavedScansActivity.class)); });
         navProfile.setOnClickListener(v -> { startActivity(new Intent(this, ProfileActivity.class)); });
 
         highlightCurrentNav();

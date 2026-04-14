@@ -24,7 +24,7 @@ public class HomeActivity extends AppCompatActivity {
     private DatabaseHelper dbHelper;
     private SessionManager session;
     private int userId;
-    private TextView navHome, navSearch, navScan, navHistory, navProfile;
+    private TextView navHome, navSearch, navScan, navSaved, navProfile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,6 +113,9 @@ public class HomeActivity extends AppCompatActivity {
         cardManual.setOnClickListener(v -> openScan("manual"));
         cardVoice.setOnClickListener(v -> openScan("voice"));
         cardFavorites.setOnClickListener(v ->
+                startActivity(new Intent(this, SavedScansActivity.class)));
+
+        findViewById(R.id.tv_see_all).setOnClickListener(v ->
                 startActivity(new Intent(this, HistoryActivity.class)));
 
         findViewById(R.id.nav_home).setOnClickListener(v -> { /* already here */ });
@@ -121,8 +124,7 @@ public class HomeActivity extends AppCompatActivity {
         findViewById(R.id.nav_search).setOnClickListener(v ->
                 startActivity(new Intent(this, SearchActivity.class)));
         findViewById(R.id.nav_scan).setOnClickListener(v -> openScan("camera"));
-        findViewById(R.id.nav_history).setOnClickListener(v ->
-                startActivity(new Intent(this, HistoryActivity.class)));
+        findViewById(R.id.nav_saved).setOnClickListener(v -> startActivity(new Intent(this, SavedScansActivity.class)));
         findViewById(R.id.nav_profile).setOnClickListener(v ->
                 startActivity(new Intent(this, ProfileActivity.class)));
         highlightCurrentNav();

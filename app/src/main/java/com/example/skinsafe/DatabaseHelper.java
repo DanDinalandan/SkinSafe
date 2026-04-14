@@ -136,6 +136,82 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
+    // ======================= DASHBOARD & FLAGGED DATA =======================
+
+    public int getDynamicTotalScansCount(int userId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery("SELECT COUNT(*) FROM " + TABLE_SCANS +
+                " WHERE " + COL_SCAN_USER_ID + "=?", new String[]{String.valueOf(userId)});
+        int count = 0;
+        if (c.moveToFirst()) count = c.getInt(0);
+        c.close();
+        db.close();
+        return count;
+    }
+
+    public int getDynamicSavedScansCount(int userId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery("SELECT COUNT(*) FROM " + TABLE_SCANS +
+                " WHERE " + COL_SCAN_USER_ID + "=? AND " + COL_SCAN_SAVED + "=1", new String[]{String.valueOf(userId)});
+        int count = 0;
+        if (c.moveToFirst()) count = c.getInt(0);
+        c.close();
+        db.close();
+        return count;
+    }
+
+    public int getDynamicFlaggedIngredientsCount(int userId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT COUNT(DISTINCT si." + COL_ING_NAME + ") FROM " + TABLE_SCAN_INGREDIENTS + " si " +
+                "INNER JOIN " + TABLE_SCANS + " s ON si." + COL_ING_SCAN_ID + " = s." + COL_SCAN_ID + " " +
+                "WHERE s." + COL_SCAN_USER_ID + "=? AND si." + COL_ING_FLAGGED + "=1";
+        Cursor c = db.rawQuery(query, new String[]{String.valueOf(userId)});
+        int count = 0;
+        if (c.moveToFirst()) count = c.getInt(0);
+        c.close();
+        db.close();
+        return count;
+    }
+
+    public List<Ingredient> getFlaggedIngredientsForUser(int userId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<Ingredient> ingredients = new ArrayList<>();
+
+        String query = "SELECT si.* FROM " + TABLE_SCAN_INGREDIENTS + " si " +
+                "INNER JOIN " + TABLE_SCANS + " s ON si." + COL_ING_SCAN_ID + " = s." + COL_SCAN_ID + " " +
+                "WHERE s." + COL_SCAN_USER_ID + "=? AND si." + COL_ING_FLAGGED + "=1 " +
+                "GROUP BY si." + COL_ING_NAME;
+
+        Cursor c = db.rawQuery(query, new String[]{String.valueOf(userId)});
+
+        if (c != null) {
+            while (c.moveToNext()) {
+                String name = c.getString(c.getColumnIndexOrThrow(COL_ING_NAME));
+                String safetyStr = c.getString(c.getColumnIndexOrThrow(COL_ING_SAFETY));
+                Ingredient.SafetyLevel safety;
+                try { safety = Ingredient.SafetyLevel.valueOf(safetyStr); }
+                catch (Exception e) { safety = Ingredient.SafetyLevel.SAFE; }
+
+                Ingredient ing = new Ingredient(
+                        name, safety,
+                        c.getString(c.getColumnIndexOrThrow(COL_ING_CATEGORY)),
+                        c.getString(c.getColumnIndexOrThrow(COL_ING_DESCRIPTION)),
+                        c.getString(c.getColumnIndexOrThrow(COL_ING_RISK))
+                );
+
+                ing.setFlagged(true);
+                ing.setHazardScore(c.getInt(c.getColumnIndexOrThrow(COL_ING_HAZARD)));
+                ing.setComedogenicRating(c.getInt(c.getColumnIndexOrThrow(COL_ING_COMEDOGENIC)));
+                ing.setAllergenInfo(c.getString(c.getColumnIndexOrThrow(COL_ING_ALLERGEN)));
+
+                ingredients.add(ing);
+            }
+            c.close();
+        }
+        db.close();
+        return ingredients;
+    }
+
     // ======================= USER OPERATIONS =======================
 
     public static String hashPassword(String password) {
@@ -288,6 +364,44 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
+    public void updateScanResult(ScanResult result) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
+        try {
+            ContentValues cv = new ContentValues();
+            cv.put(COL_SCAN_PRODUCT, result.getProductName());
+            cv.put(COL_SCAN_RAW, result.getRawIngredientText());
+            cv.put(COL_SCAN_AI_INSIGHT, result.getAiInsight() != null ? result.getAiInsight() : "");
+            cv.put(COL_SCAN_SAFE_COUNT, result.getSafeCount());
+            cv.put(COL_SCAN_CAUTION_COUNT, result.getCautionCount());
+            cv.put(COL_SCAN_HARMFUL_COUNT, result.getHarmfulCount());
+            cv.put(COL_SCAN_OVERALL, result.getOverallSafetyLabel());
+
+            db.update(TABLE_SCANS, cv, COL_SCAN_ID + "=?", new String[]{String.valueOf(result.getId())});
+
+            db.delete(TABLE_SCAN_INGREDIENTS, COL_ING_SCAN_ID + "=?", new String[]{String.valueOf(result.getId())});
+
+            for (Ingredient ing : result.getIngredients()) {
+                ContentValues icv = new ContentValues();
+                icv.put(COL_ING_SCAN_ID, result.getId());
+                icv.put(COL_ING_NAME, ing.getName());
+                icv.put(COL_ING_SAFETY, ing.getSafetyLevel().name());
+                icv.put(COL_ING_CATEGORY, ing.getCategory() != null ? ing.getCategory() : "");
+                icv.put(COL_ING_DESCRIPTION, ing.getDescription() != null ? ing.getDescription() : "");
+                icv.put(COL_ING_RISK, ing.getRiskNote() != null ? ing.getRiskNote() : "");
+                icv.put(COL_ING_FLAGGED, ing.isFlagged() ? 1 : 0);
+                icv.put(COL_ING_HAZARD, ing.getHazardScore());
+                icv.put(COL_ING_COMEDOGENIC, ing.getComedogenicRating());
+                icv.put(COL_ING_ALLERGEN, ing.getAllergenInfo() != null ? ing.getAllergenInfo() : "None");
+                db.insert(TABLE_SCAN_INGREDIENTS, null, icv);
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+            db.close();
+        }
+    }
+
     public List<ScanResult> getUserScans(int userId) {
         SQLiteDatabase db = this.getReadableDatabase();
         List<ScanResult> results = new ArrayList<>();
@@ -302,6 +416,37 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
         db.close();
         return results;
+    }
+
+    public List<ScanResult> getSavedScans(int userId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<ScanResult> results = new ArrayList<>();
+
+        Cursor c = db.query(TABLE_SCANS, null,
+                COL_SCAN_USER_ID + "=? AND " + COL_SCAN_SAVED + "=1",
+                new String[]{String.valueOf(userId)}, null, null, COL_SCAN_ID + " DESC");
+
+        if (c != null) {
+            while (c.moveToNext()) {
+                results.add(cursorToScanResult(c));
+            }
+            c.close();
+        }
+        db.close();
+        return results;
+    }
+
+    public ScanResult getScanById(int scanId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.query(TABLE_SCANS, null, COL_SCAN_ID + "=?",
+                new String[]{String.valueOf(scanId)}, null, null, null);
+        ScanResult result = null;
+        if (c != null && c.moveToFirst()) {
+            result = cursorToScanResult(c);
+            c.close();
+        }
+        db.close();
+        return result;
     }
 
     public List<Ingredient> getIngredientsForScan(int scanId) {

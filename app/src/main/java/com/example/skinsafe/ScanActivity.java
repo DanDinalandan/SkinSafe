@@ -53,7 +53,8 @@ public class ScanActivity extends AppCompatActivity {
     private EditText etProductName, etIngredients;
     private Button btnAnalyzeManual;
 
-    private Button btnVoiceStart, btnVoiceAnalyze;
+    private ImageButton btnVoiceStart;
+    private Button btnVoiceAnalyze, btnVoiceClear;
     private TextView tvVoiceStatus, tvVoiceResult;
     private LinearLayout layoutVoiceResult;
 
@@ -85,7 +86,19 @@ public class ScanActivity extends AppCompatActivity {
 
         initViews();
         setupTabSwitching();
-        switchToMode(currentMode);
+
+        String editRawText = getIntent().getStringExtra("edit_text");
+        String editName = getIntent().getStringExtra("edit_name");
+
+        if (editRawText != null && !editRawText.isEmpty()) {
+            switchToMode("manual");
+            etIngredients.setText(editRawText);
+            if (editName != null && !editName.equals("Unknown Product")) {
+                etProductName.setText(editName);
+            }
+        } else {
+            switchToMode(currentMode);
+        }
     }
 
     private void initViews() {
@@ -100,23 +113,35 @@ public class ScanActivity extends AppCompatActivity {
         layoutManual = findViewById(R.id.layout_manual);
         layoutVoice  = findViewById(R.id.layout_voice);
 
+        etProductName    = findViewById(R.id.et_product_name);
+
+        // Camera
         previewView = findViewById(R.id.preview_view);
         btnCapture  = findViewById(R.id.btn_capture);
         btnCapture.setOnClickListener(v -> captureAndAnalyze());
 
-        etProductName    = findViewById(R.id.et_product_name);
+        // Manual
         etIngredients    = findViewById(R.id.et_ingredients);
         btnAnalyzeManual = findViewById(R.id.btn_analyze_manual);
         btnAnalyzeManual.setOnClickListener(v -> analyzeManualInput());
 
-        btnVoiceStart     = findViewById(R.id.btn_voice_start);
+        // Voice
+        btnVoiceStart     = (ImageButton) findViewById(R.id.btn_voice_start);
         btnVoiceAnalyze   = findViewById(R.id.btn_voice_analyze);
+        btnVoiceClear     = findViewById(R.id.btn_voice_clear);
         tvVoiceStatus     = findViewById(R.id.tv_voice_status);
-        tvVoiceResult     = findViewById(R.id.tv_voice_result);
         layoutVoiceResult = findViewById(R.id.layout_voice_result);
 
         btnVoiceStart.setOnClickListener(v   -> startVoiceInput());
         btnVoiceAnalyze.setOnClickListener(v -> analyzeVoiceInput());
+
+        btnVoiceClear.setOnClickListener(v -> {
+            voiceInputHelper.clearAccumulated();
+            capturedVoiceText = "";
+            updateVoiceIngredientsUI();
+            btnVoiceClear.setVisibility(View.GONE);
+            tvVoiceStatus.setText("Tap the microphone and say ingredient names separated by commas");
+        });
 
         progressBar = findViewById(R.id.progress_bar);
     }
@@ -127,6 +152,8 @@ public class ScanActivity extends AppCompatActivity {
         btnTabVoice.setOnClickListener(v  -> {
             voiceInputHelper.clearAccumulated();
             capturedVoiceText = "";
+            btnVoiceClear.setVisibility(View.GONE);
+            layoutVoiceResult.setVisibility(View.GONE);
             switchToMode("voice");
         });
     }
@@ -137,18 +164,40 @@ public class ScanActivity extends AppCompatActivity {
         layoutManual.setVisibility(View.GONE);
         layoutVoice.setVisibility(View.GONE);
 
+        resetTabAppearance();
+
         switch (mode) {
             case "camera":
                 layoutCamera.setVisibility(View.VISIBLE);
+                highlightActiveTab(btnTabCamera);
                 requestCameraAndStart();
                 break;
             case "manual":
                 layoutManual.setVisibility(View.VISIBLE);
+                highlightActiveTab(btnTabManual);
                 break;
             case "voice":
                 layoutVoice.setVisibility(View.VISIBLE);
+                highlightActiveTab(btnTabVoice);
                 break;
         }
+    }
+    private void resetTabAppearance() {
+        int inactiveTextColor = android.graphics.Color.parseColor("#4E735B");
+
+        btnTabCamera.setBackgroundResource(R.drawable.bg_setting_item);
+        btnTabCamera.setTextColor(inactiveTextColor);
+
+        btnTabManual.setBackgroundResource(R.drawable.bg_setting_item);
+        btnTabManual.setTextColor(inactiveTextColor);
+
+        btnTabVoice.setBackgroundResource(R.drawable.bg_setting_item);
+        btnTabVoice.setTextColor(inactiveTextColor);
+    }
+
+    private void highlightActiveTab(Button activeBtn) {
+        activeBtn.setBackgroundResource(R.drawable.button_green);
+        activeBtn.setTextColor(android.graphics.Color.WHITE);
     }
 
     // ==================== CAMERA ====================
@@ -217,7 +266,11 @@ public class ScanActivity extends AppCompatActivity {
                                     return;
                                 }
 
-                                // AI INTEG clean the messy ocr text with Gemini before parsing
+                                String prodName = etProductName.getText().toString().trim();
+                                if (prodName.isEmpty()) prodName = "Unknown Product";
+
+                                final String finalProdName = prodName;
+
                                 if (geminiClient.isApiKeyConfigured()) {
                                     tvVoiceStatus.setText("AI is cleaning text...");
                                     geminiClient.cleanOcrText(extractedText, new GeminiApiClient.AiCallback() {
@@ -227,17 +280,16 @@ public class ScanActivity extends AppCompatActivity {
                                                 showLoading(false);
                                                 showOcrReviewDialog(extractedText);
                                             } else {
-                                                processIngredientText(cleanText, "Unknown Product", "camera");
+                                                processIngredientText(cleanText, finalProdName, "camera");
                                             }
                                         }
                                         @Override
                                         public void onError(String error) {
-                                            // Fallback to raw text if AI fails
-                                            processIngredientText(extractedText, "Unknown Product", "camera");
+                                            processIngredientText(extractedText, finalProdName, "camera");
                                         }
                                     });
                                 } else {
-                                    processIngredientText(extractedText, "Unknown Product", "camera");
+                                    processIngredientText(extractedText, finalProdName, "camera");
                                 }
                             }
 
@@ -276,7 +328,11 @@ public class ScanActivity extends AppCompatActivity {
                 .setTitle("Review Detected Text")
                 .setMessage("We detected text — does this look like an ingredient list?\n\n" + text)
                 .setPositiveButton("Yes, Analyze",
-                        (d, w) -> processIngredientText(text, "Unknown Product", "camera"))
+                        (d, w) -> {
+                            String prodName = etProductName.getText().toString().trim();
+                            if (prodName.isEmpty()) prodName = "Unknown Product";
+                            processIngredientText(text, prodName, "camera");
+                        })
                 .setNegativeButton("Edit Manually", (d, w) -> {
                     switchToMode("manual");
                     etIngredients.setText(text);
@@ -301,15 +357,12 @@ public class ScanActivity extends AppCompatActivity {
     // ==================== VOICE ====================
 
     private void startVoiceInput() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.RECORD_AUDIO}, AUDIO_PERMISSION_CODE);
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, AUDIO_PERMISSION_CODE);
             return;
         }
         if (!VoiceInputHelper.isAvailable(this)) {
-            Toast.makeText(this, "Voice recognition not available on this device.",
-                    Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Voice recognition not available on this device.", Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -320,12 +373,17 @@ public class ScanActivity extends AppCompatActivity {
 
             @Override
             public void onResult(String spokenText, String fullText) {
-                capturedVoiceText = fullText;
+                if (!spokenText.trim().isEmpty()) {
+                    if (!capturedVoiceText.isEmpty()) capturedVoiceText += ", ";
+                    capturedVoiceText += spokenText;
+                }
+
+                voiceInputHelper.clearAccumulated();
+
                 tvVoiceStatus.setText("✓ Heard! Tap mic to add more, or Analyze.");
-                tvVoiceResult.setText(fullText);
-                layoutVoiceResult.setVisibility(View.VISIBLE);
+                updateVoiceIngredientsUI();
                 btnVoiceStart.setEnabled(true);
-                btnVoiceAnalyze.setEnabled(true);
+                btnVoiceClear.setVisibility(View.VISIBLE);
             }
 
             @Override
@@ -347,34 +405,32 @@ public class ScanActivity extends AppCompatActivity {
     }
 
     private void analyzeVoiceInput() {
-        final String fullText = voiceInputHelper.getAccumulatedText().isEmpty()
-                ? capturedVoiceText
-                : voiceInputHelper.getAccumulatedText();
-
-        if (TextUtils.isEmpty(fullText)) {
+        if (TextUtils.isEmpty(capturedVoiceText)) {
             Toast.makeText(this, "No voice input detected. Tap the mic and speak.", Toast.LENGTH_SHORT).show();
             return;
         }
 
+        String prodName = etProductName.getText().toString().trim();
+        if (prodName.isEmpty()) prodName = "Unknown Product";
+        final String finalProdName = prodName;
+
         showLoading(true);
 
-        // AI INTEG format spoken words properly
         if (geminiClient.isApiKeyConfigured()) {
-            geminiClient.formatVoiceInput(fullText, new GeminiApiClient.AiCallback() {
+            geminiClient.formatVoiceInput(capturedVoiceText, new GeminiApiClient.AiCallback() {
                 @Override
                 public void onSuccess(String cleanText) {
-                    processIngredientText(cleanText, "Unknown Product", "voice");
+                    processIngredientText(cleanText, finalProdName, "voice");
                 }
                 @Override
                 public void onError(String error) {
-                    // Fallback
-                    List<String> parsed = IngredientParser.parseVoiceInput(fullText);
-                    processIngredientText(IngredientParser.formatList(parsed), "Unknown Product", "voice");
+                    List<String> parsed = IngredientParser.parseVoiceInput(capturedVoiceText);
+                    processIngredientText(IngredientParser.formatList(parsed), finalProdName, "voice");
                 }
             });
         } else {
-            List<String> parsed = IngredientParser.parseVoiceInput(fullText);
-            processIngredientText(IngredientParser.formatList(parsed), "Unknown Product", "voice");
+            List<String> parsed = IngredientParser.parseVoiceInput(capturedVoiceText);
+            processIngredientText(IngredientParser.formatList(parsed), finalProdName, "voice");
         }
     }
 
@@ -392,8 +448,6 @@ public class ScanActivity extends AppCompatActivity {
                     Toast.LENGTH_LONG).show();
             return;
         }
-
-        Log.d(TAG, "Parsed " + ingredientNames.size() + " ingredients: " + ingredientNames);
 
         User user = dbHelper.getUserById(session.getUserId());
         List<String> skinTypes    = user != null ? user.getSkinTypes()    : new ArrayList<>();
@@ -413,22 +467,18 @@ public class ScanActivity extends AppCompatActivity {
         }
 
         if (geminiClient.isApiKeyConfigured()) {
-            Log.d(TAG, "Gemini API key configured — calling AI.");
             geminiClient.generateProductInsight(productName, ingredientNames, concernNames,
                     skinTypes, new GeminiApiClient.AiCallback() {
                         @Override public void onSuccess(String aiText) {
-                            Log.d(TAG, "Gemini success: " + aiText);
                             result.setAiInsight(aiText);
                             saveAndNavigate(result);
                         }
                         @Override public void onError(String error) {
-                            Log.e(TAG, "Gemini error: " + error);
                             result.setAiInsight(generateFallbackInsight(classified));
                             saveAndNavigate(result);
                         }
                     });
         } else {
-            Log.d(TAG, "No Gemini API key — using fallback insight.");
             result.setAiInsight(generateFallbackInsight(classified));
             saveAndNavigate(result);
         }
@@ -475,6 +525,8 @@ public class ScanActivity extends AppCompatActivity {
         intent.putExtra("product_name", result.getProductName());
         intent.putExtra("ai_insight",   result.getAiInsight());
         startActivity(intent);
+
+        finish();
     }
 
     private void showLoading(boolean show) {
@@ -484,25 +536,85 @@ public class ScanActivity extends AppCompatActivity {
         btnVoiceStart.setEnabled(!show);
     }
 
+    private void updateVoiceIngredientsUI() {
+        LinearLayout llVoiceIngredients = findViewById(R.id.ll_voice_ingredients);
+        llVoiceIngredients.removeAllViews();
+
+        List<String> parsed = IngredientParser.parseVoiceInput(capturedVoiceText);
+
+        if (parsed.isEmpty()) {
+            layoutVoiceResult.setVisibility(View.GONE);
+            btnVoiceAnalyze.setEnabled(false);
+            btnVoiceClear.setVisibility(View.GONE);
+            tvVoiceStatus.setText("Tap the microphone and say ingredient names separated by commas");
+            return;
+        }
+
+        layoutVoiceResult.setVisibility(View.VISIBLE);
+        btnVoiceAnalyze.setEnabled(true);
+
+        for (int i = 0; i < parsed.size(); i++) {
+            String ingredient = parsed.get(i);
+            final int index = i;
+
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setPadding(0, 16, 0, 16);
+            row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+
+            TextView tvName = new TextView(this);
+            tvName.setText("• " + ingredient);
+            tvName.setTextColor(android.graphics.Color.parseColor("#1A1A1A"));
+            tvName.setTextSize(15f);
+            tvName.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+            TextView tvRemove = new TextView(this);
+            tvRemove.setText("✕ Remove");
+            tvRemove.setTextColor(android.graphics.Color.parseColor("#D32F2F"));
+            tvRemove.setTextSize(12f);
+            tvRemove.setTypeface(null, android.graphics.Typeface.BOLD);
+            tvRemove.setPadding(24, 8, 8, 8);
+
+            android.util.TypedValue outValue = new android.util.TypedValue();
+            getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
+            tvRemove.setBackgroundResource(outValue.resourceId);
+            tvRemove.setClickable(true);
+            tvRemove.setFocusable(true);
+
+            tvRemove.setOnClickListener(v -> {
+                parsed.remove(index);
+                capturedVoiceText = IngredientParser.formatList(parsed);
+                updateVoiceIngredientsUI();
+            });
+
+            row.addView(tvName);
+            row.addView(tvRemove);
+            llVoiceIngredients.addView(row);
+
+            if (i < parsed.size() - 1) {
+                View divider = new View(this);
+                divider.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1));
+                divider.setBackgroundColor(android.graphics.Color.parseColor("#E0E0E0"));
+                llVoiceIngredients.addView(divider);
+            }
+        }
+    }
+
     @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == CAMERA_PERMISSION_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
                 startCamera();
             else {
-                Toast.makeText(this, "Camera permission is required to scan products.",
-                        Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Camera permission is required to scan products.", Toast.LENGTH_LONG).show();
                 switchToMode("manual");
             }
         } else if (requestCode == AUDIO_PERMISSION_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
                 startVoiceInput();
             else
-                Toast.makeText(this, "Microphone permission is required for voice input.",
-                        Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Microphone permission is required for voice input.", Toast.LENGTH_LONG).show();
         }
     }
 

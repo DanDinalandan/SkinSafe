@@ -41,6 +41,9 @@
         <activity android:name=".ProfileActivity"/>
         <activity android:name=".HistoryActivity"/>
         <activity android:name=".SearchActivity"/>
+        <activity android:name=".SavedScansActivity"/>
+        <activity android:name=".FlaggedActivity"/>
+        <activity android:name=".EditScanActivity"/>
 
     </application>
 

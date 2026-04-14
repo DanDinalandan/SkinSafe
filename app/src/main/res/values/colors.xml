@@ -2,8 +2,8 @@
 <resources>
     <!-- Brand greens -->
     <color name="green_primary">#527860</color>
-    <color name="green_dark">#1B4332</color>
-    <color name="green_medium">#40916C</color>
+    <color name="green_dark">#527860</color>
+    <color name="green_medium">#527860</color>
     <color name="green_light">#E8F5E9</color>
     <color name="green_accent">#52B788</color>
     <color name="green_text_on_dark">#B2DFDB</color>

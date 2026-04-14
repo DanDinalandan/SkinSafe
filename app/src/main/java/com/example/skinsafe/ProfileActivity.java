@@ -30,8 +30,7 @@ public class ProfileActivity extends AppCompatActivity {
     private SessionManager session;
     private User currentUser;
 
-    // bottom nav
-    private View navHome, navSearch, navScan, navHistory, navProfile;
+    private View navHome, navSearch, navScan, navSaved, navProfile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,8 +41,13 @@ public class ProfileActivity extends AppCompatActivity {
         session = SessionManager.getInstance(this);
 
         initViews();
-        loadUser();
         setupListeners();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadUser();
     }
 
     private void initViews() {
@@ -51,9 +55,11 @@ public class ProfileActivity extends AppCompatActivity {
         tvInitials = findViewById(R.id.tv_initials);
         tvFullName = findViewById(R.id.tv_full_name);
         tvEmail = findViewById(R.id.tv_email);
+
         tvTotalScans = findViewById(R.id.tv_total_scans);
         tvFlaggedCount = findViewById(R.id.tv_flagged_count);
         tvSavedCount = findViewById(R.id.tv_saved_count);
+
         tvSkinTypes = findViewById(R.id.tv_skin_types);
         tvConcerns = findViewById(R.id.tv_concerns);
         btnEditProfile = findViewById(R.id.btn_edit_profile);
@@ -65,20 +71,22 @@ public class ProfileActivity extends AppCompatActivity {
         navHome = findViewById(R.id.nav_home);
         navSearch = findViewById(R.id.nav_search);
         navScan = findViewById(R.id.nav_scan);
-        navHistory = findViewById(R.id.nav_history);
+        navSaved = findViewById(R.id.nav_saved);
         navProfile = findViewById(R.id.nav_profile);
     }
 
     private void loadUser() {
-        currentUser = dbHelper.getUserById(session.getUserId());
+        int userId = session.getUserId();
+        currentUser = dbHelper.getUserById(userId);
         if (currentUser == null) { signOut(); return; }
 
         tvInitials.setText(currentUser.getInitials());
         tvFullName.setText(currentUser.getFullName());
         tvEmail.setText(currentUser.getEmail());
-        tvTotalScans.setText(String.valueOf(currentUser.getTotalScans()));
-        tvFlaggedCount.setText(String.valueOf(currentUser.getFlaggedCount()));
-        tvSavedCount.setText(String.valueOf(currentUser.getSavedCount()));
+
+        tvTotalScans.setText(String.valueOf(dbHelper.getDynamicTotalScansCount(userId)));
+        tvSavedCount.setText(String.valueOf(dbHelper.getDynamicSavedScansCount(userId)));
+        tvFlaggedCount.setText(String.valueOf(dbHelper.getDynamicFlaggedIngredientsCount(userId)));
 
         List<String> types = currentUser.getSkinTypes();
         tvSkinTypes.setText(types.isEmpty() ? "Not set" : String.join("  ·  ", types));
@@ -89,7 +97,6 @@ public class ProfileActivity extends AppCompatActivity {
 
     private void setupListeners() {
         btnBack.setOnClickListener(v -> finish());
-
         btnEditProfile.setOnClickListener(v -> showEditProfileDialog());
 
         btnSignOut.setOnClickListener(v -> {
@@ -101,18 +108,20 @@ public class ProfileActivity extends AppCompatActivity {
                     .show();
         });
 
-        rowNotifications.setOnClickListener(v ->
-                Toast.makeText(this, "Notifications settings coming soon.", Toast.LENGTH_SHORT).show());
-        rowPrivacy.setOnClickListener(v ->
-                Toast.makeText(this, "Privacy & Safety settings coming soon.", Toast.LENGTH_SHORT).show());
-        rowHelp.setOnClickListener(v ->
-                Toast.makeText(this, "Help & Support coming soon.", Toast.LENGTH_SHORT).show());
+        tvTotalScans.setOnClickListener(v -> startActivity(new Intent(this, HistoryActivity.class)));
+        tvSavedCount.setOnClickListener(v -> startActivity(new Intent(this, SavedScansActivity.class)));
+        tvFlaggedCount.setOnClickListener(v -> startActivity(new Intent(this, FlaggedActivity.class)));
+
+        rowNotifications.setOnClickListener(v -> Toast.makeText(this, "Notifications settings coming soon.", Toast.LENGTH_SHORT).show());
+        rowPrivacy.setOnClickListener(v -> Toast.makeText(this, "Privacy & Safety settings coming soon.", Toast.LENGTH_SHORT).show());
+        rowHelp.setOnClickListener(v -> Toast.makeText(this, "Help & Support coming soon.", Toast.LENGTH_SHORT).show());
 
         navHome.setOnClickListener(v -> { startActivity(new Intent(this, HomeActivity.class)); finish(); });
         navSearch.setOnClickListener(v -> { Intent i = new Intent(this, SearchActivity.class); i.putExtra("input_mode", "manual"); startActivity(i); });
         navScan.setOnClickListener(v -> { Intent i = new Intent(this, ScanActivity.class); i.putExtra("input_mode", "camera"); startActivity(i); });
-        navHistory.setOnClickListener(v -> { startActivity(new Intent(this, HistoryActivity.class)); });
+        navSaved.setOnClickListener(v -> { startActivity(new Intent(this, SavedScansActivity.class)); finish(); });
         navProfile.setOnClickListener(v -> { /* already here */ });
+
         highlightCurrentNav();
     }
 
@@ -126,7 +135,6 @@ public class ProfileActivity extends AppCompatActivity {
             text.setTypeface(null, android.graphics.Typeface.BOLD);
         }
     }
-
     private void showEditProfileDialog() {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_edit_profile, null);
 

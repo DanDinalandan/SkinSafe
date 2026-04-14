@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,7 +23,7 @@ public class HistoryActivity extends AppCompatActivity {
     private DatabaseHelper dbHelper;
     private SessionManager session;
     private List<ScanResult> scans;
-    private View navHome, navSearch, navScan, navHistory, navProfile;
+    private View navHome, navSearch, navScan, navSaved, navProfile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +47,7 @@ public class HistoryActivity extends AppCompatActivity {
     private void initViews() {
         btnBack = findViewById(R.id.btn_back);
         btnBack.setOnClickListener(v -> finish());
+
         rvHistory = findViewById(R.id.rv_history);
         rvHistory.setLayoutManager(new LinearLayoutManager(this));
         tvEmpty = findViewById(R.id.tv_empty);
@@ -55,7 +55,9 @@ public class HistoryActivity extends AppCompatActivity {
         navHome = findViewById(R.id.nav_home);
         navSearch = findViewById(R.id.nav_search);
         navScan = findViewById(R.id.nav_scan);
-        navHistory = findViewById(R.id.nav_history);
+
+        // CHANGED: Initializing navSaved
+        navSaved = findViewById(R.id.nav_saved);
         navProfile = findViewById(R.id.nav_profile);
     }
 
@@ -105,19 +107,7 @@ public class HistoryActivity extends AppCompatActivity {
         navHome.setOnClickListener(v -> { startActivity(new Intent(this, HomeActivity.class)); finish(); });
         navSearch.setOnClickListener(v -> { Intent i = new Intent(this, SearchActivity.class); i.putExtra("input_mode","manual"); startActivity(i); });
         navScan.setOnClickListener(v -> { Intent i = new Intent(this, ScanActivity.class); i.putExtra("input_mode","camera"); startActivity(i); });
-        navHistory.setOnClickListener(v -> { /* already here */ });
-        navProfile.setOnClickListener(v -> { startActivity(new Intent(this, ProfileActivity.class)); });
-        highlightCurrentNav();
-    }
-
-    private void highlightCurrentNav() {
-        int activeColor = android.graphics.Color.parseColor("#527860");
-        ImageView icon = findViewById(R.id.ic_nav_history);
-        TextView text = findViewById(R.id.tv_nav_history);
-        if (icon != null && text != null) {
-            icon.setColorFilter(activeColor);
-            text.setTextColor(activeColor);
-            text.setTypeface(null, android.graphics.Typeface.BOLD);
-        }
+        navSaved.setOnClickListener(v -> { startActivity(new Intent(this, SavedScansActivity.class)); finish(); });
+        navProfile.setOnClickListener(v -> { startActivity(new Intent(this, ProfileActivity.class)); finish(); });
     }
 }

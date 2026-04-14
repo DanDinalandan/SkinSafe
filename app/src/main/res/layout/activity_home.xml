@@ -182,7 +182,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:gravity="center"
-                            android:text="My Favorites"
+                            android:text="Saved Scans"
                             android:textColor="#1A1A1A"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -285,12 +285,17 @@
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/tv_see_all"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="See all ›"
                     android:textColor="#2D5A40"
                     android:textSize="13sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:padding="4dp"
+                    android:foreground="?attr/selectableItemBackground" />
             </LinearLayout>
 
             <androidx.recyclerview.widget.RecyclerView
