@@ -20,6 +20,8 @@ import java.util.List;
 
 public class SearchActivity extends AppCompatActivity {
 
+    private android.os.Handler debounceHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private Runnable debounceRunnable;
     private AutoCompleteTextView etSearch;
     private ImageButton btnBack;
     private LinearLayout layoutResult, layoutEmpty;
@@ -97,11 +99,18 @@ public class SearchActivity extends AppCompatActivity {
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
             @Override
             public void afterTextChanged(Editable s) {
                 String query = s.toString().trim();
+
+                if (debounceRunnable != null) {
+                    debounceHandler.removeCallbacks(debounceRunnable);
+                }
+
                 if (query.length() >= 3) {
-                    searchIngredient(query);
+                    debounceRunnable = () -> searchIngredient(query);
+                    debounceHandler.postDelayed(debounceRunnable, 600);
                 } else {
                     layoutResult.setVisibility(View.GONE);
                     layoutEmpty.setVisibility(View.VISIBLE);

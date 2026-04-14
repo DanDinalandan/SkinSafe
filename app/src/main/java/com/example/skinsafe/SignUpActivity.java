@@ -23,6 +23,7 @@ public class SignUpActivity extends AppCompatActivity {
     private ImageButton btnBack;
 
     private CheckBox cbOily, cbDry, cbCombination, cbSensitive, cbNormal;
+    private CheckBox cbNoFragrance, cbAvoidParabens, cbAcneProne;
 
     private DatabaseHelper dbHelper;
     private SessionManager sessionManager;
@@ -53,6 +54,10 @@ public class SignUpActivity extends AppCompatActivity {
         cbCombination = findViewById(R.id.cb_combination);
         cbSensitive = findViewById(R.id.cb_sensitive);
         cbNormal = findViewById(R.id.cb_normal);
+
+        cbNoFragrance = findViewById(R.id.cb_no_fragrance);
+        cbAvoidParabens = findViewById(R.id.cb_avoid_parabens);
+        cbAcneProne = findViewById(R.id.cb_acne_prone);
     }
 
     private void setupListeners() {
@@ -93,8 +98,14 @@ public class SignUpActivity extends AppCompatActivity {
         if (cbSensitive.isChecked()) skinTypes.add("Sensitive");
         if (cbNormal.isChecked()) skinTypes.add("Normal");
 
+        List<String> skinConcerns = new ArrayList<>();
+        if (cbNoFragrance.isChecked()) skinConcerns.add("No Fragrance");
+        if (cbAvoidParabens.isChecked()) skinConcerns.add("Avoid Parabens");
+        if (cbAcneProne.isChecked()) skinConcerns.add("Acne-prone");
+
         User user = new User(firstName, lastName, email, password);
         user.setSkinTypes(skinTypes);
+        user.setSkinConcerns(skinConcerns);
 
         long userId = dbHelper.registerUser(user);
         if (userId != -1) {

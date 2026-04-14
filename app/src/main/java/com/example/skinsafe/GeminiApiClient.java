@@ -24,7 +24,7 @@ public class GeminiApiClient {
     private static final String TAG = "GeminiApiClient";
 
     // Replace with your key from https://aistudio.google.com (free)
-    private static final String API_KEY = "AIzaSyD08KlhGyijFe4KcgMu9Z4iMEva69Y8-mA";
+    private static final String API_KEY = "AIzaSyAiHVoWzY_hEzOoATb1pGfTZ8YK6sdLgK8";
 
     private static final String BASE_URL =
             "https://generativelanguage.googleapis.com/v1beta/models/" +
@@ -36,7 +36,16 @@ public class GeminiApiClient {
 
     /** Cleans messy OCR text and extracts only valid ingredients */
     public void cleanOcrText(String messyText, AiCallback callback) {
-        String prompt = "You are a data extraction tool. Extract ONLY the cosmetic ingredient names from this messy OCR text. Fix any obvious spelling errors. Return a clean, comma-separated list of ingredients. Do not include marketing text, directions, or the product name. If no ingredients exist, return 'ERROR'. Text: " + messyText;
+        String prompt = "You are a strict data extraction tool for cosmetic ingredients. "
+                + "Task: Extract ONLY valid skincare/cosmetic ingredients from the following OCR text. "
+                + "Rules:\n"
+                + "1. Exclude ALL marketing copy, instructions, warnings (e.g., 'Avoid contact with eyes'), brand names, volumes (e.g., '50ml', 'Net Wt.'), and manufacturer details ('Distributed by').\n"
+                + "2. Correct common OCR spelling mistakes caused by camera blur (e.g., 'Niacinam1de' -> 'Niacinamide', 'G1ycerin' -> 'Glycerin').\n"
+                + "3. Output strictly as a simple, comma-separated list.\n"
+                + "4. Do NOT include bullet points, markdown formatting, or introductory text.\n"
+                + "5. If there are absolutely no ingredients found in the text, reply with exactly the word: ERROR\n\n"
+                + "OCR Text:\n" + messyText;
+
         callGemini(prompt, callback);
     }
 
@@ -92,7 +101,7 @@ public class GeminiApiClient {
 
     /** True when a real API key has been set (not the placeholder). */
     public boolean isApiKeyConfigured() {
-        return !API_KEY.equals("YOUR_GEMINI_API_KEY_HERE") && !API_KEY.trim().isEmpty();
+        return !API_KEY.equals("YOUR_API_KEY_HERE") && !API_KEY.trim().isEmpty();
     }
 
     // ─────────────────────────────────────────────────────────────

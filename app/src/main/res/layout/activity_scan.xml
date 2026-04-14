@@ -265,7 +265,6 @@
                 android:backgroundTint="#4E735B"
                 android:src="@drawable/ic_voice"
                 android:scaleType="centerInside"
-                android:padding="12dp"
                 app:tint="#FFFFFF" />
 
             <Button

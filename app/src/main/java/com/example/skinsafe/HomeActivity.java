@@ -39,6 +39,23 @@ public class HomeActivity extends AppCompatActivity {
         loadUserData();
         loadRecentScans();
         setupNavigation();
+
+        // --- TEMPORARY GEMINI TEST ---
+        GeminiApiClient testClient = new GeminiApiClient();
+        testClient.testConnection(new GeminiApiClient.AiCallback() {
+            @Override
+            public void onSuccess(String result) {
+                runOnUiThread(() -> android.widget.Toast.makeText(HomeActivity.this,
+                        "✅ " + result, android.widget.Toast.LENGTH_LONG).show());
+            }
+
+            @Override
+            public void onError(String error) {
+                runOnUiThread(() -> android.widget.Toast.makeText(HomeActivity.this,
+                        "❌ " + error, android.widget.Toast.LENGTH_LONG).show());
+            }
+        });
+        // -----------------------------
     }
 
     @Override
