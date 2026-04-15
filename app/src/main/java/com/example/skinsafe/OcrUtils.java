@@ -1,6 +1,12 @@
 package com.example.skinsafe;
 
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
+import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.util.Log;
 
 import com.google.mlkit.vision.common.InputImage;
@@ -15,10 +21,18 @@ public class OcrUtils {
 
     private static final String TAG = "OcrUtils";
 
+    private static final int MIN_WIDTH_PX = 1920;
+
+    private static final float CONTRAST_BOOST = 1.5f;
+
     public interface OcrCallback {
         void onSuccess(String extractedText);
         void onFailure(String error);
     }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // PUBLIC ENTRY POINT
+    // ──────────────────────────────────────────────────────────────────────────
 
     public static void extractTextFromBitmap(Bitmap bitmap, OcrCallback callback) {
         if (bitmap == null) {
@@ -26,18 +40,25 @@ public class OcrUtils {
             return;
         }
 
-        // --- CROP LOGIC: Target the center where the UI frame is ---
-        Bitmap croppedBitmap = cropToScannerFrame(bitmap);
+        Bitmap cropped = cropToScannerFrame(bitmap);
 
-        InputImage image = InputImage.fromBitmap(croppedBitmap, 0);
+        Bitmap upscaled = upscaleIfNeeded(cropped);
+
+        Bitmap enhanced = enhanceForOcr(upscaled);
+
+        InputImage image = InputImage.fromBitmap(enhanced, 0);
         TextRecognizer recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
 
         recognizer.process(image)
                 .addOnSuccessListener(visionText -> {
-                    Log.d(TAG, "OCR full text from cropped area:\n" + visionText.getText());
+                    Log.d(TAG, "OCR raw output:\n" + visionText.getText());
                     String extracted = extractIngredientSection(visionText);
                     Log.d(TAG, "OCR extracted section:\n" + extracted);
-                    callback.onSuccess(extracted);
+
+                    String cleaned = OcrTextCleaner.clean(extracted);
+                    Log.d(TAG, "OCR after cleaning:\n" + cleaned);
+
+                    callback.onSuccess(cleaned);
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "OCR failed", e);
@@ -45,35 +66,150 @@ public class OcrUtils {
                 });
     }
 
+    // ──────────────────────────────────────────────────────────────────────────
+    // IMAGE PREPROCESSING
+    // ──────────────────────────────────────────────────────────────────────────
+
     /**
-     * Crops the high-resolution camera bitmap to the center area,
-     * mimicking the green scanner frame overlay in the UI.
+     * Crops the bitmap to the center rectangle that the green scanner frame covers.
+     * The frame is roughly 85% of width and 45% of height — adjusted from the old
+     * 75%×40% because ingredient labels often extend close to the frame edges.
      */
     private static Bitmap cropToScannerFrame(Bitmap original) {
-        int width = original.getWidth();
-        int height = original.getHeight();
+        int w = original.getWidth();
+        int h = original.getHeight();
 
-        // The UI frame is roughly 75% of the screen width and 40% of the height
-        int cropWidth = (int) (width * 0.75);
-        int cropHeight = (int) (height * 0.40);
+        int cropW = (int) (w * 0.85f);
+        int cropH = (int) (h * 0.45f);
+        int startX = (w - cropW) / 2;
+        int startY = (h - cropH) / 2;
 
-        int startX = (width - cropWidth) / 2;
-        int startY = (height - cropHeight) / 2;
+        startX = Math.max(0, startX);
+        startY = Math.max(0, startY);
+        if (startX + cropW > w) cropW = w - startX;
+        if (startY + cropH > h) cropH = h - startY;
 
-        // Safety bounds check
-        if (startX < 0) startX = 0;
-        if (startY < 0) startY = 0;
-        if (startX + cropWidth > width) cropWidth = width - startX;
-        if (startY + cropHeight > height) cropHeight = height - startY;
-
-        return Bitmap.createBitmap(original, startX, startY, cropWidth, cropHeight);
+        return Bitmap.createBitmap(original, startX, startY, cropW, cropH);
     }
+
+    /**
+     * Upscales the bitmap so its width is at least MIN_WIDTH_PX.
+     * This is critical for small ingredient-label text — ML Kit struggles badly
+     * with anything smaller than ~40px character height.
+     */
+    private static Bitmap upscaleIfNeeded(Bitmap src) {
+        if (src.getWidth() >= MIN_WIDTH_PX) return src;
+
+        float scale = (float) MIN_WIDTH_PX / src.getWidth();
+        int newW = MIN_WIDTH_PX;
+        int newH = Math.round(src.getHeight() * scale);
+
+        Matrix m = new Matrix();
+        m.setScale(scale, scale);
+
+        Bitmap scaled = Bitmap.createBitmap(newW, newH, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(scaled);
+        Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG | Paint.ANTI_ALIAS_FLAG);
+        canvas.drawBitmap(src, m, paint);
+        return scaled;
+    }
+
+    /**
+     * Two-pass enhancement:
+     * Pass 1 — grayscale + contrast boost (makes light text on light backgrounds visible)
+     * Pass 2 — 3×3 sharpening convolution (makes character edges crisp for ML Kit)
+     */
+    private static Bitmap enhanceForOcr(Bitmap src) {
+        Bitmap contrasted = applyContrastBoost(src);
+
+        return applySharpen(contrasted);
+    }
+
+    private static Bitmap applyContrastBoost(Bitmap src) {
+        Bitmap out = Bitmap.createBitmap(src.getWidth(), src.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(out);
+        Paint paint = new Paint();
+
+        float[] grayscale = {
+                0.299f, 0.587f, 0.114f, 0, 0,
+                0.299f, 0.587f, 0.114f, 0, 0,
+                0.299f, 0.587f, 0.114f, 0, 0,
+                0,      0,      0,      1, 0
+        };
+
+        float c = CONTRAST_BOOST;
+        float t = (1f - c) * 128f;
+        float[] contrast = {
+                c, 0, 0, 0, t,
+                0, c, 0, 0, t,
+                0, 0, c, 0, t,
+                0, 0, 0, 1, 0
+        };
+
+        ColorMatrix cm = new ColorMatrix(grayscale);
+        ColorMatrix contrastCm = new ColorMatrix(contrast);
+        cm.postConcat(contrastCm);
+
+        paint.setColorFilter(new ColorMatrixColorFilter(cm));
+        canvas.drawBitmap(src, 0, 0, paint);
+        return out;
+    }
+
+    /**
+     * Sharpening kernel (3×3 unsharp mask style):
+     *  0  -1   0
+     * -1   5  -1
+     *  0  -1   0
+     * Applied manually via pixel array for reliability across all API levels.
+     */
+    private static Bitmap applySharpen(Bitmap src) {
+        int w = src.getWidth();
+        int h = src.getHeight();
+        int[] pixels = new int[w * h];
+        src.getPixels(pixels, 0, w, 0, 0, w, h);
+
+        int[] output = new int[w * h];
+
+        for (int y = 1; y < h - 1; y++) {
+            for (int x = 1; x < w - 1; x++) {
+                int idx = y * w + x;
+
+                int center = pixels[idx];
+                int top    = pixels[(y - 1) * w + x];
+                int bottom = pixels[(y + 1) * w + x];
+                int left   = pixels[y * w + (x - 1)];
+                int right  = pixels[y * w + (x + 1)];
+
+                int r = clamp(5 * r(center) - r(top) - r(bottom) - r(left) - r(right));
+                int g = clamp(5 * g(center) - g(top) - g(bottom) - g(left) - g(right));
+                int b = clamp(5 * b(center) - b(top) - b(bottom) - b(left) - b(right));
+
+                output[idx] = Color.rgb(r, g, b);
+            }
+        }
+
+        for (int x = 0; x < w; x++) { output[x] = pixels[x]; output[(h-1)*w+x] = pixels[(h-1)*w+x]; }
+        for (int y = 0; y < h; y++) { output[y*w] = pixels[y*w]; output[y*w+w-1] = pixels[y*w+w-1]; }
+
+        Bitmap result = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        result.setPixels(output, 0, w, 0, 0, w, h);
+        return result;
+    }
+
+    private static int r(int px) { return (px >> 16) & 0xFF; }
+    private static int g(int px) { return (px >>  8) & 0xFF; }
+    private static int b(int px) { return  px        & 0xFF; }
+    private static int clamp(int v) { return Math.max(0, Math.min(255, v)); }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // TEXT EXTRACTION
+    // ──────────────────────────────────────────────────────────────────────────
 
     private static String extractIngredientSection(Text visionText) {
         String[] startMarkers = {
                 "ingredients:", "ingredients :", "ingredient list:", "ingr:",
-                "ingredients", "active ingredients", "inactive ingredients",
-                "full ingredients", "all ingredients"
+                "ingredients", "active ingredients:", "inactive ingredients:",
+                "full ingredients:", "all ingredients:", "содержит", "inci:"
         };
 
         String[] stopMarkers = {
@@ -81,7 +217,7 @@ public class OcrUtils {
                 "net wt", "net weight", "manufactured by", "distributed by",
                 "made in", "exp.", "expiry", "best before", "mfg", "lot no",
                 "keep out", "for external", "store in", "upc", "barcode",
-                "for best results", "storage"
+                "for best results", "storage", "country of origin", "recyclable"
         };
 
         List<Text.TextBlock> blocks = visionText.getTextBlocks();
@@ -114,26 +250,26 @@ public class OcrUtils {
 
                 for (int rli = li + 1; rli < lines.size(); rli++) {
                     String t = lines.get(rli).getText().trim();
-                    if (isStopLine(t, stopMarkers)) return cleanText(sb.toString());
+                    if (isStopLine(t, stopMarkers)) return cleanRawText(sb.toString());
                     if (!t.isEmpty()) { if (sb.length() > 0) sb.append(", "); sb.append(t); }
                 }
 
                 for (int rbi = bi + 1; rbi < blocks.size(); rbi++) {
                     for (Text.Line line : blocks.get(rbi).getLines()) {
                         String t = line.getText().trim();
-                        if (isStopLine(t, stopMarkers)) return cleanText(sb.toString());
+                        if (isStopLine(t, stopMarkers)) return cleanRawText(sb.toString());
                         if (!t.isEmpty()) { if (sb.length() > 0) sb.append(", "); sb.append(t); }
                     }
                 }
 
-                return cleanText(sb.toString());
+                return cleanRawText(sb.toString());
             }
         }
 
         Log.d(TAG, "No ingredient marker found — using comma-density heuristic.");
         String richest = findCommaRichestBlock(blocks);
         if (richest != null && richest.split(",").length >= 3) {
-            return cleanText(richest);
+            return cleanRawText(richest);
         }
 
         return visionText.getText();
@@ -161,7 +297,7 @@ public class OcrUtils {
         return best;
     }
 
-    private static String cleanText(String raw) {
+    private static String cleanRawText(String raw) {
         if (raw == null || raw.trim().isEmpty()) return "";
         return raw
                 .replaceAll("\r\n|\r|\n", ", ")
@@ -179,6 +315,6 @@ public class OcrUtils {
         int totalWords = 0;
         for (String seg : segments) totalWords += seg.trim().split("\\s+").length;
         double avgWords = (double) totalWords / segments.length;
-        return avgWords <= 4;
+        return avgWords <= 5;
     }
 }

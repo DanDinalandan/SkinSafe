@@ -42,6 +42,16 @@
             android:layout_height="24dp"
             android:indeterminateTint="#C8E6C9"
             android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tv_scan_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Status"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:visibility="gone" />
     </LinearLayout>
 
     <LinearLayout
@@ -265,6 +275,7 @@
                 android:backgroundTint="#4E735B"
                 android:src="@drawable/ic_voice"
                 android:scaleType="centerInside"
+                android:padding="12dp"
                 app:tint="#FFFFFF" />
 
             <Button

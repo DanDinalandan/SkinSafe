@@ -40,7 +40,7 @@ public class HomeActivity extends AppCompatActivity {
         loadRecentScans();
         setupNavigation();
 
-        // --- TEMPORARY GEMINI TEST ---
+        // --- TEMP GEMINI TEST ---
         GeminiApiClient testClient = new GeminiApiClient();
         testClient.testConnection(new GeminiApiClient.AiCallback() {
             @Override
