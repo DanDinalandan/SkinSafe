@@ -420,37 +420,63 @@ public class ScanActivity extends AppCompatActivity {
     }
 
     private void showOcrFailDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle("No Ingredients Found")
-                .setMessage("We couldn't read the ingredient list.\n\n"
-                        + "Tips for better results:\n"
-                        + "• Hold the phone VERY close — ingredient text is often tiny\n"
-                        + "• Make sure the label is well-lit (use a flashlight if needed)\n"
-                        + "• Keep the phone steady until the shutter fires\n"
-                        + "• Frame ONLY the ingredient list inside the green box\n"
-                        + "• Try a flat angle — curved bottles distort text\n\n"
-                        + "Or switch to Manual Input and paste the ingredients.")
-                .setPositiveButton("Try Again", (d, w) -> d.dismiss())
-                .setNegativeButton("Manual Input", (d, w) -> switchToMode("manual"))
-                .show();
+        View view = getLayoutInflater().inflate(R.layout.dialog_custom_alert, null);
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(view).create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        TextView tvTitle = view.findViewById(R.id.tv_dialog_title);
+        TextView tvMessage = view.findViewById(R.id.tv_dialog_message);
+        Button btnNeg = view.findViewById(R.id.btn_dialog_negative);
+        Button btnPos = view.findViewById(R.id.btn_dialog_positive);
+
+        tvTitle.setText("No Text Found");
+        tvMessage.setText("We couldn't detect any ingredient text.\n\n• Hold the camera VERY close to the label\n• Make sure it's well-lit and in focus\n• Frame ONLY the ingredient list");
+
+        btnNeg.setText("Manual Input");
+        btnPos.setText("Try Again");
+
+        btnNeg.setOnClickListener(v -> {
+            dialog.dismiss();
+            switchToMode("manual");
+        });
+        btnPos.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
     }
 
     private void showOcrReviewDialog(String text) {
-        new AlertDialog.Builder(this)
-                .setTitle("Please Verify")
-                .setMessage("We detected some text but aren't fully confident:\n\n"
-                        + text + "\n\nIs this an ingredient list?")
-                .setPositiveButton("Yes, Analyze", (d, w) -> {
-                    String prodName = etProductName.getText().toString().trim();
-                    if (prodName.isEmpty()) prodName = "Unknown Product";
-                    processIngredientText(text, prodName, "camera");
-                })
-                .setNegativeButton("Edit Manually", (d, w) -> {
-                    switchToMode("manual");
-                    etIngredients.setText(text);
-                })
-                .setNeutralButton("Try Again", (d, w) -> d.dismiss())
-                .show();
+        View view = getLayoutInflater().inflate(R.layout.dialog_custom_alert, null);
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(view).create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        TextView tvTitle = view.findViewById(R.id.tv_dialog_title);
+        TextView tvMessage = view.findViewById(R.id.tv_dialog_message);
+        Button btnNeg = view.findViewById(R.id.btn_dialog_negative);
+        Button btnPos = view.findViewById(R.id.btn_dialog_positive);
+
+        tvTitle.setText("Review Detected Text");
+        tvMessage.setText("We detected text — does this look like an ingredient list?\n\n" + text);
+
+        btnNeg.setText("Edit Manually");
+        btnPos.setText("Analyze");
+
+        btnNeg.setOnClickListener(v -> {
+            dialog.dismiss();
+            switchToMode("manual");
+            etIngredients.setText(text);
+        });
+        btnPos.setOnClickListener(v -> {
+            dialog.dismiss();
+            String prodName = etProductName.getText().toString().trim();
+            if (prodName.isEmpty()) prodName = "Unknown Product";
+            processIngredientText(text, prodName, "camera");
+        });
+
+        dialog.show();
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

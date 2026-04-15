@@ -137,6 +137,10 @@ public class ProfileActivity extends AppCompatActivity {
     }
     private void showEditProfileDialog() {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_edit_profile, null);
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(dialogView).create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
 
         CheckBox cbOily = dialogView.findViewById(R.id.cb_oily);
         CheckBox cbDry = dialogView.findViewById(R.id.cb_dry);
@@ -158,27 +162,29 @@ public class ProfileActivity extends AppCompatActivity {
         cbAvoidParabens.setChecked(currentConcerns.contains("Avoid Parabens"));
         cbAcneProne.setChecked(currentConcerns.contains("Acne-prone"));
 
-        new AlertDialog.Builder(this)
-                .setTitle("Edit Skin Profile")
-                .setView(dialogView)
-                .setPositiveButton("Save", (d, w) -> {
-                    List<String> newTypes = new ArrayList<>();
-                    List<String> newConcerns = new ArrayList<>();
-                    if (cbOily.isChecked()) newTypes.add("Oily");
-                    if (cbDry.isChecked()) newTypes.add("Dry");
-                    if (cbCombination.isChecked()) newTypes.add("Combination");
-                    if (cbSensitive.isChecked()) newTypes.add("Sensitive");
-                    if (cbNormal.isChecked()) newTypes.add("Normal");
-                    if (cbNoFragrance.isChecked()) newConcerns.add("No Fragrance");
-                    if (cbAvoidParabens.isChecked()) newConcerns.add("Avoid Parabens");
-                    if (cbAcneProne.isChecked()) newConcerns.add("Acne-prone");
+        Button btnCancel = dialogView.findViewById(R.id.btn_cancel_edit);
+        Button btnSave = dialogView.findViewById(R.id.btn_save_edit);
 
-                    dbHelper.updateUserProfile(currentUser.getId(), newTypes, newConcerns);
-                    Toast.makeText(this, "Profile updated!", Toast.LENGTH_SHORT).show();
-                    loadUser();
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        btnSave.setOnClickListener(v -> {
+            List<String> newTypes = new ArrayList<>();
+            List<String> newConcerns = new ArrayList<>();
+            if (cbOily.isChecked()) newTypes.add("Oily");
+            if (cbDry.isChecked()) newTypes.add("Dry");
+            if (cbCombination.isChecked()) newTypes.add("Combination");
+            if (cbSensitive.isChecked()) newTypes.add("Sensitive");
+            if (cbNormal.isChecked()) newTypes.add("Normal");
+            if (cbNoFragrance.isChecked()) newConcerns.add("No Fragrance");
+            if (cbAvoidParabens.isChecked()) newConcerns.add("Avoid Parabens");
+            if (cbAcneProne.isChecked()) newConcerns.add("Acne-prone");
+
+            dbHelper.updateUserProfile(currentUser.getId(), newTypes, newConcerns);
+            Toast.makeText(this, "Profile updated!", Toast.LENGTH_SHORT).show();
+            loadUser();
+            dialog.dismiss();
+        });
+
+        dialog.show();
     }
 
     private void signOut() {
