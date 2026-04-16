@@ -14,6 +14,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.text.HtmlCompat;
 
 import android.graphics.Color;
 import java.util.List;
@@ -77,7 +78,6 @@ public class SearchActivity extends AppCompatActivity {
     private void setupAutoComplete() {
         List<String> suggestions = IngredientDatabase.getInstance().getAllIngredientNames();
 
-        // adapter to display the suggestions
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 this,
                 android.R.layout.simple_dropdown_item_1line,
@@ -130,6 +130,7 @@ public class SearchActivity extends AppCompatActivity {
 
         highlightCurrentNav();
     }
+
     private void highlightCurrentNav() {
         int activeColor = android.graphics.Color.parseColor("#527860");
         ImageView icon = findViewById(R.id.ic_nav_search);
@@ -176,7 +177,7 @@ public class SearchActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(String result) {
                     progressAi.setVisibility(View.GONE);
-                    tvResultAi.setText(result);
+                    tvResultAi.setText(HtmlCompat.fromHtml(result, HtmlCompat.FROM_HTML_MODE_COMPACT));
                 }
                 @Override
                 public void onError(String error) {

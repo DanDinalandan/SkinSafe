@@ -107,12 +107,11 @@ public class GeminiApiClient {
 
         String prompt = "You are an expert cosmetic dermatologist. Provide a detailed analysis for the skincare ingredient '" + ingredientName + "'."
                 + skinCtx
-                + "\n\nFormat your response EXACTLY in this structure. Do not use markdown (* or **):\n\n"
-                + "VERDICT: (One sentence summary: Safe, Use with Caution, or Avoid. Add a brief reason.)\n\n"
-                + "--- THE DEEP DIVE ---\n\n"
-                + "WHAT IT DOES:\n(Explain its chemical function in 1-2 simple sentences)\n\n"
-                + "HOW IT AFFECTS YOUR SKIN:\n(Explain exactly what it will do to the user's specific skin profile)\n\n"
-                + "CAUTIONS & RISKS:\n(Mention any pore-clogging risks, sun sensitivities, or allergies)";
+                + "\n\nFormat your response EXACTLY following this HTML template. Do NOT use markdown. Use these exact tags:\n\n"
+                + "<b><font color='#1A1A1A'>VERDICT:</font></b> (One sentence summary: Safe, Use with Caution, or Avoid. Add a brief reason.)<br><br>"
+                + "<b><font color='#1A1A1A'>WHAT IT DOES:</font></b><br>(Explain its chemical function in 1-2 simple sentences)<br><br>"
+                + "<b><font color='#1A1A1A'>HOW IT AFFECTS YOUR SKIN:</font></b><br>(Explain exactly what it will do to the user's specific skin profile)<br><br>"
+                + "<b><font color='#1A1A1A'>CAUTIONS & RISKS:</font></b><br>(Mention any pore-clogging risks, sun sensitivities, or allergies)";
 
         callGemini(prompt, callback);
     }

@@ -538,7 +538,7 @@ public class ScanActivity extends AppCompatActivity {
                     capturedVoiceText += spokenText;
                 }
                 voiceInputHelper.clearAccumulated();
-                tvVoiceStatus.setText("✓ Heard! Tap mic to add more, or Analyze.");
+                tvVoiceStatus.setText("✓ Heard! Tap the mic to add more, or Analyze.");
                 updateVoiceIngredientsUI();
                 btnVoiceStart.setEnabled(true);
                 btnVoiceClear.setVisibility(View.VISIBLE);
@@ -546,13 +546,13 @@ public class ScanActivity extends AppCompatActivity {
 
             @Override
             public void onError(String errorMessage) {
-                tvVoiceStatus.setText("Error: " + errorMessage + "\nTap mic to try again.");
+                tvVoiceStatus.setText("Error: " + errorMessage + "\nTap the mic to try again.");
                 btnVoiceStart.setEnabled(true);
             }
 
             @Override
             public void onReadyForSpeech() {
-                tvVoiceStatus.setText("🎤 Ready — speak now!");
+                tvVoiceStatus.setText("Ready — speak now!");
             }
 
             @Override

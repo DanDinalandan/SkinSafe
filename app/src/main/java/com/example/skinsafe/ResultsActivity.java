@@ -123,14 +123,32 @@ public class ResultsActivity extends AppCompatActivity {
         }
 
         TextView tvName = sheetView.findViewById(R.id.tv_sheet_ingredient_name);
+        TextView tvSafety = sheetView.findViewById(R.id.tv_sheet_safety);
+        TextView tvCategory = sheetView.findViewById(R.id.tv_sheet_category);
+        TextView tvRiskNote = sheetView.findViewById(R.id.tv_sheet_risk_note);
+
         TextView tvInsight = sheetView.findViewById(R.id.tv_sheet_insight_text);
         TextView tvViewMore = sheetView.findViewById(R.id.tv_view_more);
         View layoutLoading = sheetView.findViewById(R.id.layout_sheet_loading);
-        Button btnClose = sheetView.findViewById(R.id.btn_sheet_close);
+        View btnClose = sheetView.findViewById(R.id.btn_sheet_close);
 
         tvName.setText(ingredient.getName());
-        btnClose.setOnClickListener(v -> bottomSheetDialog.dismiss());
+        tvCategory.setText(ingredient.getCategory() != null ? ingredient.getCategory() : "Cosmetic Ingredient");
 
+        String risk = ingredient.getRiskNote();
+        tvRiskNote.setText((risk != null && !risk.isEmpty() && !risk.equalsIgnoreCase("None"))
+                ? risk : "No specific risks noted");
+
+        int color;
+        switch (ingredient.getSafetyLevel()) {
+            case HARMFUL: color = android.graphics.Color.parseColor("#D32F2F"); break;
+            case CAUTION: color = android.graphics.Color.parseColor("#FBC02D"); break;
+            default:      color = android.graphics.Color.parseColor("#388E3C"); break;
+        }
+        tvSafety.setTextColor(color);
+        tvSafety.setText("⊙ " + ingredient.getSafetyLabel());
+
+        btnClose.setOnClickListener(v -> bottomSheetDialog.dismiss());
         tvViewMore.setOnClickListener(v -> {
             tvInsight.setMaxLines(Integer.MAX_VALUE);
             tvViewMore.setVisibility(View.GONE);
@@ -155,7 +173,7 @@ public class ResultsActivity extends AppCompatActivity {
                     tvInsight.setMaxLines(3);
                     tvViewMore.setVisibility(View.VISIBLE);
 
-                    tvInsight.setText(result);
+                    tvInsight.setText(androidx.core.text.HtmlCompat.fromHtml(result, androidx.core.text.HtmlCompat.FROM_HTML_MODE_COMPACT));
                 }
 
                 @Override

@@ -4,134 +4,177 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/bg_bottom_sheet"
-    android:orientation="vertical"
-    android:padding="24dp">
+    android:orientation="vertical">
 
     <View
         android:layout_width="40dp"
         android:layout_height="4dp"
         android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="24dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="16dp"
         android:background="#E0E0E0" />
 
-    <LinearLayout
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <ImageView
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="@drawable/ai_insight_background"
-            android:padding="12dp"
-            android:src="@drawable/ic_search"
-            app:tint="#527860" />
+        android:layout_height="wrap_content">
 
         <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:letterSpacing="0.05"
-                android:text="AI INGREDIENT ANALYSIS"
-                android:textColor="#527860"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tv_sheet_ingredient_name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="serif"
-                android:text="Ingredient Name"
-                android:textColor="#1A1A1A"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-    </LinearLayout>
-
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:layout_marginTop="24dp"
-        android:minHeight="150dp">
-
-        <LinearLayout
-            android:id="@+id/layout_sheet_loading"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:gravity="center"
             android:orientation="vertical"
-            android:visibility="visible">
+            android:paddingHorizontal="24dp"
+            android:paddingBottom="32dp">
 
-            <ProgressBar
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:indeterminateTint="#527860" />
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/tv_sheet_ingredient_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_toStartOf="@+id/btn_sheet_close"
+                    android:layout_marginEnd="16dp"
+                    android:fontFamily="serif"
+                    android:text="Ingredient Name"
+                    android:textColor="#1A1A1A"
+                    android:textSize="26sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/btn_sheet_close"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/bg_pill_transparent"
+                    android:gravity="center"
+                    android:text="✕"
+                    android:textColor="#78909C"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </RelativeLayout>
+
+            <TextView
+                android:id="@+id/tv_sheet_safety"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="⊙ Safe"
+                android:textColor="#388E3C"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="Consulting AI Expert..."
-                android:textColor="#78909C"
-                android:textSize="14sp" />
-        </LinearLayout>
-
-        <androidx.core.widget.NestedScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
+                android:layout_marginTop="24dp"
+                android:text="Health Effects"
+                android:textColor="#1A1A1A"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:layout_marginTop="12dp"
+                android:background="@drawable/ai_insight_background"
+                android:orientation="vertical"
+                android:padding="16dp">
 
                 <TextView
-                    android:id="@+id/tv_sheet_insight_text"
+                    android:id="@+id/tv_sheet_category"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:lineSpacingExtra="6dp"
+                    android:layout_marginBottom="12dp"
+                    android:drawableStart="@drawable/ic_search"
+                    android:drawablePadding="12dp"
+                    android:drawableTint="#527860"
+                    android:text="Category goes here"
                     android:textColor="#1A1A1A"
-                    android:textSize="15sp"
-                    android:maxLines="3"
-                    android:ellipsize="end"
-                    android:visibility="gone" />
+                    android:textSize="15sp" />
 
                 <TextView
-                    android:id="@+id/tv_view_more"
-                    android:layout_width="wrap_content"
+                    android:id="@+id/tv_sheet_risk_note"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="View More ▾"
-                    android:textColor="#527860"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:paddingVertical="4dp"
-                    android:visibility="gone"
-                    android:background="?attr/selectableItemBackground" />
-
+                    android:drawableStart="@drawable/ic_scan"
+                    android:drawablePadding="12dp"
+                    android:drawableTint="#527860"
+                    android:text="Risk notes go here"
+                    android:textColor="#1A1A1A"
+                    android:textSize="15sp" />
             </LinearLayout>
-        </androidx.core.widget.NestedScrollView>
-    </FrameLayout>
 
-    <Button
-        android:id="@+id/btn_sheet_close"
-        android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:layout_marginTop="32dp"
-        android:background="@drawable/bg_pill_transparent"
-        android:text="Close"
-        android:textAllCaps="false"
-        android:textColor="#527860"
-        android:textSize="15sp"
-        android:textStyle="bold" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="Details"
+                android:textColor="#1A1A1A"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:minHeight="100dp">
+
+                <LinearLayout
+                    android:id="@+id/layout_sheet_loading"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:visibility="visible">
+
+                    <ProgressBar
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:indeterminateTint="#527860" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Consulting AI Expert..."
+                        android:textColor="#78909C"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_sheet_insight_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:lineSpacingExtra="6dp"
+                        android:maxLines="3"
+                        android:textColor="#546E7A"
+                        android:textSize="15sp"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/tv_view_more"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:paddingVertical="4dp"
+                        android:text="View More ▾"
+                        android:textColor="#527860"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+                </LinearLayout>
+            </FrameLayout>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 </LinearLayout>
