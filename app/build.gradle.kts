@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.glide)
     implementation(libs.circleimageview)
+    implementation(libs.generativeai)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

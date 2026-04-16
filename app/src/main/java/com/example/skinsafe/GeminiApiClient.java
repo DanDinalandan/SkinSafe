@@ -24,26 +24,30 @@ public class GeminiApiClient {
     private static final String TAG = "GeminiApiClient";
 
     // Replace with your key from https://aistudio.google.com (free)
-    private static final String API_KEY = "AIzaSyAiHVoWzY_hEzOoATb1pGfTZ8YK6sdLgK8";
+    private static final String API_KEY = "AIzaSyAX1Rcmn0oB-PWgS-vweiSbGRw8byPK1fk";
 
     private static final String BASE_URL =
             "https://generativelanguage.googleapis.com/v1beta/models/" +
-                    "gemini-2.0-flash-lite:generateContent?key=";
+                    "gemini-3.1-flash-lite-preview:generateContent?key=";
 
-    private final OkHttpClient client = new OkHttpClient();
+    private final OkHttpClient client = new OkHttpClient.Builder()
+            .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+            .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .build();
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     /** Cleans messy OCR text and extracts only valid ingredients */
     public void cleanOcrText(String messyText, AiCallback callback) {
-        String prompt = "You are a strict data extraction tool for cosmetic ingredients. "
-                + "Task: Extract ONLY valid skincare/cosmetic ingredients from the following OCR text. "
-                + "Rules:\n"
-                + "1. Exclude ALL marketing copy, instructions, warnings (e.g., 'Avoid contact with eyes'), brand names, volumes (e.g., '50ml', 'Net Wt.'), and manufacturer details ('Distributed by').\n"
-                + "2. Correct common OCR spelling mistakes caused by camera blur (e.g., 'Niacinam1de' -> 'Niacinamide', 'G1ycerin' -> 'Glycerin').\n"
-                + "3. Output strictly as a simple, comma-separated list.\n"
-                + "4. Do NOT include bullet points, markdown formatting, or introductory text.\n"
-                + "5. If there are absolutely no ingredients found in the text, reply with exactly the word: ERROR\n\n"
+        String prompt = "You are an expert cosmetic chemist and data parser. "
+                + "I will provide raw, typo-filled OCR text from a skincare label. "
+                + "Your ONLY job is to extract the actual cosmetic ingredients, fix the spelling mistakes, and return them as a clean, comma-separated list.\n\n"
+                + "STRICT RULES:\n"
+                + "1. DESTROY all garbage text: remove instructions, expiry dates, barcodes, temperatures (e.g., 'STORE BELOW 35°C', '4\"806535\"23', 'natural bte', 'FOR EXPIRY DATE').\n"
+                + "2. FIX OCR typos: correct 'giycerin' to 'Glycerin', 'calcİum glucongte' to 'Calcium Gluconate', 'potassiura soroag' to 'Potassium Sorbate', 'tocopber' to 'Tocopherol', etc.\n"
+                + "3. SEPARATE merged words intelligently (e.g., 'glyceryi cGprylatecetearytacons' -> 'Glyceryl Caprylate, Cetearyl Alcohol').\n"
+                + "4. Output ONLY the final comma-separated list. Absolutely no intro, no outro, no markdown.\n\n"
                 + "OCR Text:\n" + messyText;
 
         callGemini(prompt, callback);
@@ -79,10 +83,17 @@ public class GeminiApiClient {
                                   List<String> skinTypes,
                                   AiCallback callback) {
         String skinCtx = (skinTypes != null && !skinTypes.isEmpty())
-                ? " The user has " + String.join(", ", skinTypes) + " skin." : "";
-        String prompt = "Explain the skincare ingredient '" + ingredientName + "' in 2-3 simple "
-                + "sentences. Cover what it does, who should be careful, and whether it is "
-                + "generally safe." + skinCtx + " Keep it friendly and non-technical. No markdown.";
+                ? " The user's skin profile is: " + String.join(", ", skinTypes) + "." : "";
+
+        String prompt = "You are an expert cosmetic dermatologist. Provide a detailed analysis for the skincare ingredient '" + ingredientName + "'."
+                + skinCtx
+                + "\n\nFormat your response EXACTLY in this 4-part structure. Be highly informative but easy to read and avoid using heavy jargons." +
+                "Avoid as well using layout conventions like '*' as it will not be converted to bolding the letters:\n\n"
+                + "WHAT IT DOES:\n(Explain its chemical function in 1-2 simple sentences)\n\n"
+                + "HOW IT AFFECTS YOUR SKIN:\n(Explain exactly what it will do to the user's specific skin profile)\n\n"
+                + "CAUTIONS & RISKS:\n(Mention any pore-clogging risks, sun sensitivities, or allergies)\n\n"
+                + "VERDICT:\n(One sentence summary: Safe, Use with Caution, or Avoid)";
+
         callGemini(prompt, callback);
     }
     public void testConnection(AiCallback callback) {
@@ -137,12 +148,15 @@ public class GeminiApiClient {
                     + prompt.substring(0, Math.min(200, prompt.length())));
 
             try {
-                // Build request body
                 JSONObject part = new JSONObject().put("text", prompt);
                 JSONArray parts = new JSONArray().put(part);
                 JSONObject contentObj = new JSONObject().put("parts", parts);
                 JSONArray contents = new JSONArray().put(contentObj);
                 JSONObject body = new JSONObject().put("contents", contents);
+
+                JSONObject genConfig = new JSONObject();
+                genConfig.put("temperature", 0.1);
+                body.put("generationConfig", genConfig);
 
                 // Safety settings
                 JSONArray safety = new JSONArray();
@@ -169,6 +183,11 @@ public class GeminiApiClient {
                             + responseBody.substring(0, Math.min(400, responseBody.length())));
 
                     if (!response.isSuccessful()) {
+                        if (response.code() == 429) {
+                            mainHandler.post(() -> callback.onError("Whoa there! AI speed limit reached. Please wait 60 seconds and try again."));
+                            return;
+                        }
+
                         String msg = "HTTP " + response.code() + ": " + responseBody;
                         Log.e(TAG, "Gemini API error: " + msg);
                         mainHandler.post(() -> callback.onError(msg));

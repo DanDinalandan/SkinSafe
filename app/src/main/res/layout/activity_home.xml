@@ -114,19 +114,38 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="-40dp"
+                android:layout_marginHorizontal="12dp"
                 android:orientation="vertical"
                 android:paddingHorizontal="20dp"
                 android:paddingBottom="20dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="12dp"
-                    android:letterSpacing="0.05"
-                    android:text="QUICK ACTIONS"
-                    android:textColor="#C8E6C9"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:letterSpacing="0.05"
+                        android:text="QUICK ACTIONS"
+                        android:textColor="#C8E6C9"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <ImageButton
+                        android:id="@+id/btn_home_help"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:padding="3dp"
+                        android:src="@drawable/ic_questionmark"
+                        android:scaleType="centerInside"
+                        app:tint="#C8E6C9" />
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"

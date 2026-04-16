@@ -14,6 +14,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import java.util.List;
 
@@ -112,59 +113,52 @@ public class ResultsActivity extends AppCompatActivity {
     }
 
     private void showIngredientDetail(Ingredient ingredient) {
-        Dialog dialog = new Dialog(this);
-        dialog.setContentView(R.layout.dialog_ingredient_detail);
-        dialog.getWindow().setLayout(
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        View sheetView = getLayoutInflater().inflate(R.layout.layout_bottom_sheet_insight, null);
+        bottomSheetDialog.setContentView(sheetView);
 
-        TextView tvName = dialog.findViewById(R.id.dialog_tv_name);
-        TextView tvCategory = dialog.findViewById(R.id.dialog_tv_category);
-        TextView tvSafety = dialog.findViewById(R.id.dialog_tv_safety);
-        TextView tvDescription = dialog.findViewById(R.id.dialog_tv_description);
-        TextView tvRisk = dialog.findViewById(R.id.dialog_tv_risk);
-        TextView tvAiExplanation = dialog.findViewById(R.id.dialog_tv_ai_explanation);
-        ProgressBar progressIngAi = dialog.findViewById(R.id.dialog_progress_ai);
-        Button btnClose = dialog.findViewById(R.id.dialog_btn_close);
+        if (bottomSheetDialog.getWindow() != null) {
+            bottomSheetDialog.getWindow().findViewById(com.google.android.material.R.id.design_bottom_sheet)
+                    .setBackgroundResource(android.R.color.transparent);
+        }
+
+        TextView tvName = sheetView.findViewById(R.id.tv_sheet_ingredient_name);
+        TextView tvInsight = sheetView.findViewById(R.id.tv_sheet_insight_text);
+        View layoutLoading = sheetView.findViewById(R.id.layout_sheet_loading);
+        Button btnClose = sheetView.findViewById(R.id.btn_sheet_close);
 
         tvName.setText(ingredient.getName());
-        tvCategory.setText(ingredient.getCategory());
-        tvDescription.setText(ingredient.getDescription());
-        tvRisk.setText(ingredient.getRiskNote() != null ? ingredient.getRiskNote() : "No specific risks noted.");
+        btnClose.setOnClickListener(v -> bottomSheetDialog.dismiss());
 
-        int color;
-        switch (ingredient.getSafetyLevel()) {
-            case HARMFUL: color = Color.parseColor("#E53935"); break;
-            case CAUTION: color = Color.parseColor("#FB8C00"); break;
-            default:      color = Color.parseColor("#2E7D32"); break;
-        }
-        tvSafety.setText(ingredient.getSafetyLabel());
-        tvSafety.setTextColor(color);
+        bottomSheetDialog.show();
+
+        User user = dbHelper.getUserById(session.getUserId());
+        List<String> skinTypes = user != null ? user.getSkinTypes() : null;
 
         if (geminiClient.isApiKeyConfigured()) {
-            progressIngAi.setVisibility(View.VISIBLE);
-            tvAiExplanation.setText("");
-            User user = dbHelper.getUserById(session.getUserId());
-            List<String> skinTypes = user != null ? user.getSkinTypes() : null;
+            layoutLoading.setVisibility(View.VISIBLE);
+            tvInsight.setVisibility(View.GONE);
+
             geminiClient.explainIngredient(ingredient.getName(), skinTypes, new GeminiApiClient.AiCallback() {
                 @Override
                 public void onSuccess(String result) {
-                    progressIngAi.setVisibility(View.GONE);
-                    tvAiExplanation.setText(result);
+                    layoutLoading.setVisibility(View.GONE);
+                    tvInsight.setVisibility(View.VISIBLE);
+                    tvInsight.setText(result);
                 }
+
                 @Override
                 public void onError(String error) {
-                    progressIngAi.setVisibility(View.GONE);
-                    tvAiExplanation.setText(ingredient.getDescription());
+                    layoutLoading.setVisibility(View.GONE);
+                    tvInsight.setVisibility(View.VISIBLE);
+                    tvInsight.setText(ingredient.getDescription() + "\n\n(AI analysis temporarily unavailable)");
                 }
             });
         } else {
-            progressIngAi.setVisibility(View.GONE);
-            tvAiExplanation.setText(ingredient.getDescription());
+            layoutLoading.setVisibility(View.GONE);
+            tvInsight.setVisibility(View.VISIBLE);
+            tvInsight.setText(ingredient.getDescription());
         }
-
-        btnClose.setOnClickListener(v -> dialog.dismiss());
-        dialog.show();
     }
 
     private void toggleSave() {

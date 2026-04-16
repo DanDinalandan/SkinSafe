@@ -116,6 +116,7 @@ public class ProfileActivity extends AppCompatActivity {
         rowPrivacy.setOnClickListener(v -> Toast.makeText(this, "Privacy & Safety settings coming soon.", Toast.LENGTH_SHORT).show());
         rowHelp.setOnClickListener(v -> Toast.makeText(this, "Help & Support coming soon.", Toast.LENGTH_SHORT).show());
 
+        rowHelp.setOnClickListener(v -> showInstructionDialog());
         navHome.setOnClickListener(v -> { startActivity(new Intent(this, HomeActivity.class)); finish(); });
         navSearch.setOnClickListener(v -> { Intent i = new Intent(this, SearchActivity.class); i.putExtra("input_mode", "manual"); startActivity(i); });
         navScan.setOnClickListener(v -> { Intent i = new Intent(this, ScanActivity.class); i.putExtra("input_mode", "camera"); startActivity(i); });
@@ -183,6 +184,33 @@ public class ProfileActivity extends AppCompatActivity {
             loadUser();
             dialog.dismiss();
         });
+
+        dialog.show();
+    }
+
+    private void showInstructionDialog() {
+        View view = getLayoutInflater().inflate(R.layout.dialog_custom_alert, null);
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(view).create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        TextView tvTitle = view.findViewById(R.id.tv_dialog_title);
+        TextView tvMessage = view.findViewById(R.id.tv_dialog_message);
+        Button btnNeg = view.findViewById(R.id.btn_dialog_negative);
+        Button btnPos = view.findViewById(R.id.btn_dialog_positive);
+
+        tvTitle.setText("How to use SkinSafe");
+        tvMessage.setText("Here is how to check if a product matches your Skin Profile:\n\n" +
+                "📷 Camera: Snap a photo of an ingredient label.\n" +
+                "✍️ Manual: Type or paste ingredients.\n" +
+                "🎤 Voice: Read the ingredients out loud.\n\n" +
+                "Your Flagged Ingredients list will automatically warn you about things to avoid!");
+
+        btnNeg.setVisibility(View.GONE);
+        btnPos.setText("Got it!");
+
+        btnPos.setOnClickListener(v -> dialog.dismiss());
 
         dialog.show();
     }

@@ -213,11 +213,11 @@ public class OcrUtils {
         };
 
         String[] stopMarkers = {
-                "directions", "how to use", "usage", "warnings", "caution",
-                "net wt", "net weight", "manufactured by", "distributed by",
-                "made in", "exp.", "expiry", "best before", "mfg", "lot no",
-                "keep out", "for external", "store in", "upc", "barcode",
-                "for best results", "storage", "country of origin", "recyclable"
+                "directions", "how to use", "usage", "warnings", "caution", "keep out", "for external", "for best results",
+                "manufactured by", "distributed by", "made in", "imported by", "gandang kalikasan", "inc.", "ltd", "excellence ave",
+                "net wt", "net weight", "exp.", "expiry", "for expiry", "best before", "mfg", "lot no", "upc", "barcode", "stamp",
+                "store in", "storage", "store below", "away from", "direct sunlight",
+                "crueltyfree", "cruelty free", "vegan", "naturally derived", "natural", "recyclable", "ldpe"
         };
 
         List<Text.TextBlock> blocks = visionText.getTextBlocks();

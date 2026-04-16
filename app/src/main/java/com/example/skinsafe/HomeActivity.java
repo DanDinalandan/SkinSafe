@@ -2,9 +2,13 @@ package com.example.skinsafe;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -20,6 +24,7 @@ public class HomeActivity extends AppCompatActivity {
     private RecyclerView rvRecentScans;
     private HistoryAdapter historyAdapter;
     private List<ScanResult> recentScans;
+    private ImageButton btnHomeHelp;
 
     private DatabaseHelper dbHelper;
     private SessionManager session;
@@ -39,6 +44,63 @@ public class HomeActivity extends AppCompatActivity {
         loadUserData();
         loadRecentScans();
         setupNavigation();
+
+        checkFirstTimeLaunch();
+
+        // --- TEMPORARY GEMINI TEST ---
+        GeminiApiClient testClient = new GeminiApiClient();
+        testClient.testConnection(new GeminiApiClient.AiCallback() {
+            @Override
+            public void onSuccess(String result) {
+                runOnUiThread(() -> android.widget.Toast.makeText(HomeActivity.this,
+                        "✅ " + result, android.widget.Toast.LENGTH_LONG).show());
+            }
+
+            @Override
+            public void onError(String error) {
+                runOnUiThread(() -> android.widget.Toast.makeText(HomeActivity.this,
+                        "❌ " + error, android.widget.Toast.LENGTH_LONG).show());
+            }
+        });
+        // -----------------------------
+
+    }
+
+    private void checkFirstTimeLaunch() {
+        android.content.SharedPreferences prefs = getSharedPreferences("SkinSafePrefs", MODE_PRIVATE);
+        boolean hasSeenTutorial = prefs.getBoolean("has_seen_tutorial", false);
+
+        if (!hasSeenTutorial) {
+            showInstructionDialog();
+            prefs.edit().putBoolean("has_seen_tutorial", true).apply();
+        }
+    }
+
+    private void showInstructionDialog() {
+        View view = getLayoutInflater().inflate(R.layout.dialog_custom_alert, null);
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(view).create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        TextView tvTitle = view.findViewById(R.id.tv_dialog_title);
+        TextView tvMessage = view.findViewById(R.id.tv_dialog_message);
+        Button btnNeg = view.findViewById(R.id.btn_dialog_negative);
+        Button btnPos = view.findViewById(R.id.btn_dialog_positive);
+
+        tvTitle.setText("Welcome to SkinSafe! 🌱");
+        tvMessage.setText("Here is how to check if a product matches your Skin Profile:\n\n" +
+                "📷 Camera: Snap a photo of an ingredient label.\n" +
+                "✍️ Manual: Type or paste ingredients.\n" +
+                "🎤 Voice: Read the ingredients out loud.\n\n" +
+                "Your Flagged Ingredients list will automatically warn you about things to avoid!");
+
+        btnNeg.setVisibility(View.GONE);
+        btnPos.setText("Let's Go!");
+
+        btnPos.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
     }
 
     @Override
@@ -61,6 +123,8 @@ public class HomeActivity extends AppCompatActivity {
         rvRecentScans = findViewById(R.id.rv_recent_scans);
         rvRecentScans.setLayoutManager(new LinearLayoutManager(this));
         rvRecentScans.setNestedScrollingEnabled(false);
+
+        btnHomeHelp = findViewById(R.id.btn_home_help);
     }
 
     private void loadUserData() {
@@ -128,6 +192,7 @@ public class HomeActivity extends AppCompatActivity {
         findViewById(R.id.nav_profile).setOnClickListener(v ->
                 startActivity(new Intent(this, ProfileActivity.class)));
         highlightCurrentNav();
+        btnHomeHelp.setOnClickListener(v -> showInstructionDialog());
     }
 
     private void highlightCurrentNav() {
