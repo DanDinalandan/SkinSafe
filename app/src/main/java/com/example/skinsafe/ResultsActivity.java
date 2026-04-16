@@ -124,11 +124,17 @@ public class ResultsActivity extends AppCompatActivity {
 
         TextView tvName = sheetView.findViewById(R.id.tv_sheet_ingredient_name);
         TextView tvInsight = sheetView.findViewById(R.id.tv_sheet_insight_text);
+        TextView tvViewMore = sheetView.findViewById(R.id.tv_view_more);
         View layoutLoading = sheetView.findViewById(R.id.layout_sheet_loading);
         Button btnClose = sheetView.findViewById(R.id.btn_sheet_close);
 
         tvName.setText(ingredient.getName());
         btnClose.setOnClickListener(v -> bottomSheetDialog.dismiss());
+
+        tvViewMore.setOnClickListener(v -> {
+            tvInsight.setMaxLines(Integer.MAX_VALUE);
+            tvViewMore.setVisibility(View.GONE);
+        });
 
         bottomSheetDialog.show();
 
@@ -138,12 +144,17 @@ public class ResultsActivity extends AppCompatActivity {
         if (geminiClient.isApiKeyConfigured()) {
             layoutLoading.setVisibility(View.VISIBLE);
             tvInsight.setVisibility(View.GONE);
+            tvViewMore.setVisibility(View.GONE);
 
             geminiClient.explainIngredient(ingredient.getName(), skinTypes, new GeminiApiClient.AiCallback() {
                 @Override
                 public void onSuccess(String result) {
                     layoutLoading.setVisibility(View.GONE);
                     tvInsight.setVisibility(View.VISIBLE);
+
+                    tvInsight.setMaxLines(3);
+                    tvViewMore.setVisibility(View.VISIBLE);
+
                     tvInsight.setText(result);
                 }
 
@@ -151,12 +162,14 @@ public class ResultsActivity extends AppCompatActivity {
                 public void onError(String error) {
                     layoutLoading.setVisibility(View.GONE);
                     tvInsight.setVisibility(View.VISIBLE);
+                    tvInsight.setMaxLines(Integer.MAX_VALUE);
                     tvInsight.setText(ingredient.getDescription() + "\n\n(AI analysis temporarily unavailable)");
                 }
             });
         } else {
             layoutLoading.setVisibility(View.GONE);
             tvInsight.setVisibility(View.VISIBLE);
+            tvInsight.setMaxLines(Integer.MAX_VALUE);
             tvInsight.setText(ingredient.getDescription());
         }
     }

@@ -367,44 +367,59 @@ public class ScanActivity extends AppCompatActivity {
         String preview = buildPreviewString(detected);
         showOcrPreviewDialog(ocrText, preview, finalProdName);
     }
-
-    /**
-     * Shows a "We found these ingredients — does this look right?" dialog.
-     * Gives the user a chance to catch any remaining errors before analysis.
-     */
     private void showOcrPreviewDialog(String ocrText, String preview, String prodName) {
         showLoading(false);
-        new AlertDialog.Builder(this)
-                .setTitle("Ingredients Detected")
-                .setMessage("Found " + IngredientParser.parse(ocrText).size()
-                        + " ingredients:\n\n" + preview
-                        + "\n\nDoes this look correct?")
-                .setPositiveButton("Yes, Analyze", (d, w) -> {
-                    showLoading(true);
-                    setStatus("Analyzing…");
-                    if (geminiClient.isApiKeyConfigured()) {
-                        setStatus("AI cleaning text…");
-                        geminiClient.cleanOcrText(ocrText, new GeminiApiClient.AiCallback() {
-                            @Override public void onSuccess(String cleanText) {
-                                if ("ERROR".equals(cleanText)) {
-                                    processIngredientText(ocrText, prodName, "camera");
-                                } else {
-                                    processIngredientText(cleanText, prodName, "camera");
-                                }
-                            }
-                            @Override public void onError(String error) {
-                                processIngredientText(ocrText, prodName, "camera");
-                            }
-                        });
-                    } else {
+
+        View view = getLayoutInflater().inflate(R.layout.dialog_custom_alert, null);
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(view).create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        TextView tvTitle = view.findViewById(R.id.tv_dialog_title);
+        TextView tvMessage = view.findViewById(R.id.tv_dialog_message);
+        Button btnNeg = view.findViewById(R.id.btn_dialog_negative);
+        Button btnPos = view.findViewById(R.id.btn_dialog_positive);
+
+        int count = IngredientParser.parse(ocrText).size();
+        tvTitle.setText("Ingredients Detected");
+        tvMessage.setText("Found " + count + " ingredients:\n\n" + preview + "\n\nDoes this look correct?");
+
+        btnNeg.setText("Edit Manually");
+        btnPos.setText("Yes, Analyze");
+
+        btnNeg.setOnClickListener(v -> {
+            dialog.dismiss();
+            switchToMode("manual");
+            etIngredients.setText(ocrText);
+        });
+
+        btnPos.setOnClickListener(v -> {
+            dialog.dismiss();
+            showLoading(true);
+            setStatus("Analyzing…");
+
+            if (geminiClient.isApiKeyConfigured()) {
+                setStatus("AI cleaning text…");
+                geminiClient.cleanOcrText(ocrText, new GeminiApiClient.AiCallback() {
+                    @Override public void onSuccess(String cleanText) {
+                        if ("ERROR".equals(cleanText)) {
+                            processIngredientText(ocrText, prodName, "camera");
+                        } else {
+                            processIngredientText(cleanText, prodName, "camera");
+                        }
+                    }
+                    @Override public void onError(String error) {
                         processIngredientText(ocrText, prodName, "camera");
                     }
-                })
-                .setNegativeButton("Edit Manually", (d, w) -> {
-                    switchToMode("manual");
-                    etIngredients.setText(ocrText);
-                })
-                .show();
+                });
+            } else {
+                processIngredientText(ocrText, prodName, "camera");
+            }
+        });
+
+        dialog.show();
     }
 
     private String buildPreviewString(List<String> ingredients) {

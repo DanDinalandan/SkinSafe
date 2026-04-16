@@ -24,7 +24,7 @@ public class GeminiApiClient {
     private static final String TAG = "GeminiApiClient";
 
     // Replace with your key from https://aistudio.google.com (free)
-    private static final String API_KEY = "AIzaSyAX1Rcmn0oB-PWgS-vweiSbGRw8byPK1fk";
+    private static final String API_KEY = "";
 
     private static final String BASE_URL =
             "https://generativelanguage.googleapis.com/v1beta/models/" +
@@ -87,12 +87,12 @@ public class GeminiApiClient {
 
         String prompt = "You are an expert cosmetic dermatologist. Provide a detailed analysis for the skincare ingredient '" + ingredientName + "'."
                 + skinCtx
-                + "\n\nFormat your response EXACTLY in this 4-part structure. Be highly informative but easy to read and avoid using heavy jargons." +
-                "Avoid as well using layout conventions like '*' as it will not be converted to bolding the letters:\n\n"
+                + "\n\nFormat your response EXACTLY in this structure. Do not use markdown (* or **):\n\n"
+                + "VERDICT: (One sentence summary: Safe, Use with Caution, or Avoid. Add a brief reason.)\n\n"
+                + "--- THE DEEP DIVE ---\n\n"
                 + "WHAT IT DOES:\n(Explain its chemical function in 1-2 simple sentences)\n\n"
                 + "HOW IT AFFECTS YOUR SKIN:\n(Explain exactly what it will do to the user's specific skin profile)\n\n"
-                + "CAUTIONS & RISKS:\n(Mention any pore-clogging risks, sun sensitivities, or allergies)\n\n"
-                + "VERDICT:\n(One sentence summary: Safe, Use with Caution, or Avoid)";
+                + "CAUTIONS & RISKS:\n(Mention any pore-clogging risks, sun sensitivities, or allergies)";
 
         callGemini(prompt, callback);
     }
