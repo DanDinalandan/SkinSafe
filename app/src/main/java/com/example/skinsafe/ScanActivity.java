@@ -596,12 +596,11 @@ public class ScanActivity extends AppCompatActivity {
 
     private void processIngredientText(String rawText, String productName, String method) {
         showLoading(true);
-        setStatus("Classifying ingredients…");
+        setStatus("Checking database…");
+        String tempText = OcrTextCleaner.clean(rawText);
+        final String finalText = tempText.isEmpty() ? rawText : tempText;
 
-        String text = OcrTextCleaner.clean(rawText);
-        if (text.isEmpty()) text = rawText;
-
-        List<String> ingredientNames = IngredientParser.parse(text);
+        List<String> ingredientNames = IngredientParser.parse(finalText);
         if (ingredientNames.isEmpty()) {
             showLoading(false);
             Toast.makeText(this,
@@ -610,14 +609,85 @@ public class ScanActivity extends AppCompatActivity {
             return;
         }
 
+        IngredientDatabase ingDb = IngredientDatabase.getInstance();
+
+        List<String> missingIngredients = new ArrayList<>();
+        for (String name : ingredientNames) {
+            if (!ingDb.ingredientExists(name)) {
+                missingIngredients.add(name);
+            }
+        }
+
+        if (missingIngredients.isEmpty() || !geminiClient.isApiKeyConfigured()) {
+            classifyAndFinish(ingredientNames, productName, method, finalText);
+            return;
+        }
+
+        setStatus("Researching " + missingIngredients.size() + " unknown ingredients…");
+
+        geminiClient.fetchMissingIngredientsData(missingIngredients, new GeminiApiClient.AiCallback() {
+            @Override
+            public void onSuccess(String jsonResult) {
+                try {
+                    jsonResult = jsonResult.replace("```json", "").replace("```", "").trim();
+                    org.json.JSONArray newItems = new org.json.JSONArray(jsonResult);
+
+                    for (int i = 0; i < newItems.length(); i++) {
+                        org.json.JSONObject item = newItems.getJSONObject(i);
+
+                        Ingredient.SafetyLevel level;
+                        try {
+                            level = Ingredient.SafetyLevel.valueOf(item.optString("safety_level", "SAFE").toUpperCase());
+                        } catch (Exception e) {
+                            level = Ingredient.SafetyLevel.SAFE;
+                        }
+
+                        Ingredient newIng = new Ingredient(
+                                item.optString("name", "Unknown"),
+                                level,
+                                item.optString("category", "Unknown"),
+                                item.optString("description", "No description available."),
+                                item.optString("risk_note", "None")
+                        );
+
+                        if (level == Ingredient.SafetyLevel.HARMFUL) newIng.setHazardScore(8);
+                        else if (level == Ingredient.SafetyLevel.CAUTION) newIng.setHazardScore(4);
+                        else newIng.setHazardScore(1);
+
+                        newIng.setComedogenicRating(item.optInt("comedogenic_rating", 0));
+                        newIng.setAllergenInfo("None");
+
+                        ingDb.insertIngredient(newIng);
+                    }
+
+                    classifyAndFinish(ingredientNames, productName, method, finalText);
+
+                } catch (org.json.JSONException e) {
+                    Log.e(TAG, "Failed to parse Gemini JSON: " + e.getMessage());
+                    classifyAndFinish(ingredientNames, productName, method, finalText);
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, "Gemini fetch error: " + error);
+                classifyAndFinish(ingredientNames, productName, method, finalText);
+            }
+        });
+    }
+
+    /** * Helper method to finish the classification process
+     * AFTER the database has been updated by Gemini.
+     */
+    private void classifyAndFinish(List<String> ingredientNames, String productName, String method, String originalText) {
+        setStatus("Classifying ingredients…");
         User user = dbHelper.getUserById(session.getUserId());
         List<String> skinTypes    = user != null ? user.getSkinTypes()    : new ArrayList<>();
         List<String> skinConcerns = user != null ? user.getSkinConcerns() : new ArrayList<>();
 
-        List<Ingredient> classified =
-                classifier.classifyWithSkinProfile(ingredientNames, skinTypes, skinConcerns);
+        List<Ingredient> classified = classifier.classifyWithSkinProfile(ingredientNames, skinTypes, skinConcerns);
 
-        ScanResult result = new ScanResult(productName, text, method);
+        ScanResult result = new ScanResult(productName, originalText, method);
         result.setUserId(session.getUserId());
         result.setIngredients(classified);
 

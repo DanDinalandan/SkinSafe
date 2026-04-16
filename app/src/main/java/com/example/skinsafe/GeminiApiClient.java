@@ -68,6 +68,26 @@ public class GeminiApiClient {
     // PUBLIC API
     // ─────────────────────────────────────────────────────────────
 
+    public void fetchMissingIngredientsData(List<String> missingIngredients, AiCallback callback) {
+        String names = String.join(", ", missingIngredients);
+
+        String prompt = "You are a cosmetic chemistry database. I need the safety profiles for the following ingredients: " + names + "\n\n"
+                + "Respond ONLY with a valid JSON array of objects. Do not include markdown, do not include intro text. Just the raw JSON.\n\n"
+                + "Format EXACTLY like this example:\n"
+                + "[\n"
+                + "  {\n"
+                + "    \"name\": \"Ingredient Name\",\n"
+                + "    \"category\": \"Humectant / Preservative / Surfactant etc\",\n"
+                + "    \"description\": \"A brief 1-sentence description of what it does.\",\n"
+                + "    \"safety_level\": \"SAFE\" (must be exactly SAFE, CAUTION, or HARMFUL),\n"
+                + "    \"risk_note\": \"Clogs pores / Skin irritant / None\",\n"
+                + "    \"comedogenic_rating\": 0 (integer 0-5)\n"
+                + "  }\n"
+                + "]";
+
+        callGemini(prompt, callback);
+    }
+
     /** Generates an overall AI insight for a scanned product. */
     public void generateProductInsight(String productName,
                                        List<String> ingredients,

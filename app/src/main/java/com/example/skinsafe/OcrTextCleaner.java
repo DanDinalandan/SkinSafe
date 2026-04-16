@@ -11,53 +11,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-/**
- * OcrTextCleaner
- * ──────────────
- * Post-processes raw ML Kit OCR output to fix the most common ingredient-label
- * misreads before lookup in IngredientDatabase.
- *
- * Pipeline order:
- *  1. Strip the "INGREDIENTS:" header if it leaked into the string
- *  2. Normalize separators (line breaks → commas)
- *  3. Fix character-level substitutions (OCR font confusion)
- *  4. Apply ingredient name correction table
- *  5. Normalize whitespace and punctuation
- *  6. Filter junk tokens (numbers, barcodes, single letters)
- */
 public class OcrTextCleaner {
 
     private static final String TAG = "OcrTextCleaner";
 
     // ──────────────────────────────────────────────────────────────────────────
-    // CHARACTER SUBSTITUTION TABLE
-    // Common OCR misreads at the character level, especially for small fonts.
-    // Applied as regex replacements within each token (not across word boundaries).
-    // ──────────────────────────────────────────────────────────────────────────
-    private static final String[][] CHAR_SUBS = {
-            // rn → m  (very common in lowercase ingredient names)
-            {"rn", "m"},
-            // cl → d  (e.g. "clecyl" → "decyl")
-            {"cl(?=[aeiou])", "d"},
-            // 0 (zero) → O when surrounded by letters
-            {"(?<=[a-zA-Z])0(?=[a-zA-Z])", "o"},
-            // 1 (one) → l when surrounded by letters
-            {"(?<=[a-zA-Z])1(?=[a-zA-Z])", "l"},
-            // 5 → S at word start
-            {"\\b5(?=[a-z])", "S"},
-            // I → l when between lowercase letters (e.g. "nIacinamIde")
-            {"(?<=[a-z])I(?=[a-z])", "l"},
-            // VV → W
-            {"VV", "W"},
-            {"vv", "w"},
-            // ii → n (rare but happens)
-            {"ii(?=[aeiou])", "n"},
-    };
-
-    // ──────────────────────────────────────────────────────────────────────────
     // INGREDIENT NAME CORRECTION TABLE
-    // Maps common OCR-mangled forms → correct INCI name.
-    // Keys are lowercase. Values are the correctly-cased name.
     // ──────────────────────────────────────────────────────────────────────────
     private static final Map<String, String> NAME_FIXES = new HashMap<>();
     static {
@@ -74,7 +33,6 @@ public class OcrTextCleaner {
         NAME_FIXES.put("glycetin",          "Glycerin");
         NAME_FIXES.put("glycerine",         "Glycerin");
         NAME_FIXES.put("glycerol",          "Glycerin");
-        NAME_FIXES.put("giycerin",          "Glycerin");
         NAME_FIXES.put("giycerin",          "Glycerin");
         NAME_FIXES.put("butylene glyco",    "Butylene Glycol");
         NAME_FIXES.put("butyleneglyco",     "Butylene Glycol");
@@ -161,6 +119,12 @@ public class OcrTextCleaner {
         NAME_FIXES.put("aloe vera",                "Aloe Barbadensis Leaf Extract");
         NAME_FIXES.put("aloe barbadensis",         "Aloe Barbadensis Leaf Extract");
         NAME_FIXES.put("green tea extract",        "Camellia Sinensis Leaf Extract");
+        NAME_FIXES.put("com starch", "Corn Starch");
+        NAME_FIXES.put("hydrolyzed com starch", "Hydrolyzed Corn Starch");
+        NAME_FIXES.put("hydrolyzed corn starch", "Hydrolyzed Corn Starch");
+        NAME_FIXES.put("sderotium gum", "Sclerotium Gum");
+        NAME_FIXES.put("sclerotium gum", "Sclerotium Gum");
+        NAME_FIXES.put("beta vulgaris", "Beta Vulgaris (Beet) Root Extract");
 
         // --- Sunscreen filters ---
         NAME_FIXES.put("avobenzone",               "Avobenzone");
@@ -214,11 +178,6 @@ public class OcrTextCleaner {
     // PUBLIC ENTRY POINT
     // ──────────────────────────────────────────────────────────────────────────
 
-    /**
-     * Cleans OCR output through the full pipeline.
-     * Input: raw comma-separated text from OcrUtils
-     * Output: cleaned, comma-separated ingredient list ready for IngredientDatabase lookup
-     */
     public static String clean(String raw) {
         if (raw == null || raw.trim().isEmpty()) return "";
 
@@ -232,9 +191,6 @@ public class OcrTextCleaner {
         for (String token : tokens) {
             String t = token.trim();
             if (t.isEmpty()) continue;
-
-            t = applyCharSubs(t);
-
             t = applyNameFix(t);
 
             if (isJunk(t)) {
@@ -265,14 +221,6 @@ public class OcrTextCleaner {
                 .replaceAll(",\\s*,+", ",")
                 .replaceAll("\\s{2,}", " ")
                 .trim();
-    }
-
-    private static String applyCharSubs(String token) {
-        if (token.length() < 4) return token;
-        for (String[] sub : CHAR_SUBS) {
-            token = token.replaceAll(sub[0], sub[1]);
-        }
-        return token;
     }
 
     private static String applyNameFix(String token) {

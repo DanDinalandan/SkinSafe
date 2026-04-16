@@ -2885,5 +2885,15 @@ public class IngredientDatabase {
         database.put(name.toLowerCase(), ing);
     }
 
+    public boolean ingredientExists(String name) {
+        if (name == null || name.trim().isEmpty()) return false;
+        return database.containsKey(name.trim().toLowerCase());
+    }
+
+    public void insertIngredient(Ingredient ingredient) {
+        if (ingredient == null || ingredient.getName() == null) return;
+        database.put(ingredient.getName().trim().toLowerCase(), ingredient);
+    }
+
     public int getDatabaseSize() { return database.size(); }
 }
