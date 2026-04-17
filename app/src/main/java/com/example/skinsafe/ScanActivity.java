@@ -1,5 +1,6 @@
 package com.example.skinsafe;
 
+
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -18,6 +19,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -30,43 +32,55 @@ import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+
 import com.google.common.util.concurrent.ListenableFuture;
+
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+
 public class ScanActivity extends AppCompatActivity {
+
 
     private static final String TAG = "ScanActivity";
     private static final int CAMERA_PERMISSION_CODE = 100;
     private static final int AUDIO_PERMISSION_CODE  = 101;
 
+
     private static final int MIN_CONFIDENT_INGREDIENTS = 4;
+
 
     private Button btnTabCamera, btnTabManual, btnTabVoice;
     private LinearLayout layoutCamera, layoutVoice;
     private ScrollView layoutManual;
 
+
     private PreviewView previewView;
     private ImageCapture imageCapture;
     private Button btnCapture;
 
+
     private EditText etProductName, etIngredients;
     private Button btnAnalyzeManual;
+
 
     private ImageButton btnVoiceStart;
     private Button btnVoiceAnalyze, btnVoiceClear;
     private TextView tvVoiceStatus, tvVoiceResult;
     private LinearLayout layoutVoiceResult;
 
+
     private ProgressBar progressBar;
     private TextView tvScanStatus;
     private ImageButton btnBack;
 
+
     private String currentMode;
     private String capturedVoiceText = "";
+
 
     private DatabaseHelper dbHelper;
     private SessionManager session;
@@ -74,10 +88,12 @@ public class ScanActivity extends AppCompatActivity {
     private GeminiApiClient geminiClient;
     private VoiceInputHelper voiceInputHelper;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_scan);
+
 
         dbHelper         = DatabaseHelper.getInstance(this);
         session          = SessionManager.getInstance(this);
@@ -85,14 +101,18 @@ public class ScanActivity extends AppCompatActivity {
         geminiClient     = new GeminiApiClient();
         voiceInputHelper = new VoiceInputHelper(this);
 
+
         currentMode = getIntent().getStringExtra("input_mode");
         if (currentMode == null) currentMode = "camera";
+
 
         initViews();
         setupTabSwitching();
 
+
         String editRawText = getIntent().getStringExtra("edit_text");
         String editName    = getIntent().getStringExtra("edit_name");
+
 
         if (editRawText != null && !editRawText.isEmpty()) {
             switchToMode("manual");
@@ -105,29 +125,36 @@ public class ScanActivity extends AppCompatActivity {
         }
     }
 
+
     private void initViews() {
         btnBack = findViewById(R.id.btn_back);
         btnBack.setOnClickListener(v -> finish());
+
 
         btnTabCamera = findViewById(R.id.btn_tab_camera);
         btnTabManual = findViewById(R.id.btn_tab_manual);
         btnTabVoice  = findViewById(R.id.btn_tab_voice);
 
+
         layoutCamera = findViewById(R.id.layout_camera);
         layoutManual = findViewById(R.id.layout_manual);
         layoutVoice  = findViewById(R.id.layout_voice);
 
+
         etProductName = findViewById(R.id.et_product_name);
+
 
         // Camera
         previewView = findViewById(R.id.preview_view);
         btnCapture  = findViewById(R.id.btn_capture);
         btnCapture.setOnClickListener(v -> captureAndAnalyze());
 
+
         // Manual
         etIngredients    = findViewById(R.id.et_ingredients);
         btnAnalyzeManual = findViewById(R.id.btn_analyze_manual);
         btnAnalyzeManual.setOnClickListener(v -> analyzeManualInput());
+
 
         // Voice
         btnVoiceStart     = findViewById(R.id.btn_voice_start);
@@ -136,8 +163,10 @@ public class ScanActivity extends AppCompatActivity {
         tvVoiceStatus     = findViewById(R.id.tv_voice_status);
         layoutVoiceResult = findViewById(R.id.layout_voice_result);
 
+
         btnVoiceStart.setOnClickListener(v   -> startVoiceInput());
         btnVoiceAnalyze.setOnClickListener(v -> analyzeVoiceInput());
+
 
         btnVoiceClear.setOnClickListener(v -> {
             voiceInputHelper.clearAccumulated();
@@ -147,13 +176,16 @@ public class ScanActivity extends AppCompatActivity {
             tvVoiceStatus.setText("Tap the microphone and say ingredient names separated by commas");
         });
 
+
         progressBar  = findViewById(R.id.progress_bar);
+
 
         tvScanStatus = findViewById(R.id.tv_scan_status);
         if (tvScanStatus == null) {
             tvScanStatus = new TextView(this);
         }
     }
+
 
     private void setupTabSwitching() {
         btnTabCamera.setOnClickListener(v -> switchToMode("camera"));
@@ -166,6 +198,7 @@ public class ScanActivity extends AppCompatActivity {
             switchToMode("voice");
         });
     }
+
 
     private void switchToMode(String mode) {
         currentMode = mode;
@@ -190,6 +223,7 @@ public class ScanActivity extends AppCompatActivity {
         }
     }
 
+
     private void resetTabAppearance() {
         int inactive = android.graphics.Color.parseColor("#4E735B");
         btnTabCamera.setBackgroundResource(R.drawable.bg_setting_item);
@@ -200,14 +234,17 @@ public class ScanActivity extends AppCompatActivity {
         btnTabVoice.setTextColor(inactive);
     }
 
+
     private void highlightActiveTab(Button btn) {
         btn.setBackgroundResource(R.drawable.button_green);
         btn.setTextColor(android.graphics.Color.WHITE);
     }
 
+
     // ═══════════════════════════════════════════════════════════════════════════
     // CAMERA
     // ═══════════════════════════════════════════════════════════════════════════
+
 
     private void requestCameraAndStart() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
@@ -219,6 +256,7 @@ public class ScanActivity extends AppCompatActivity {
         }
     }
 
+
     private void startCamera() {
         ListenableFuture<ProcessCameraProvider> future = ProcessCameraProvider.getInstance(this);
         future.addListener(() -> {
@@ -227,9 +265,11 @@ public class ScanActivity extends AppCompatActivity {
                 Preview preview = new Preview.Builder().build();
                 preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
+
                 imageCapture = new ImageCapture.Builder()
                         .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
                         .build();
+
 
                 provider.unbindAll();
                 provider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA,
@@ -240,6 +280,7 @@ public class ScanActivity extends AppCompatActivity {
         }, ContextCompat.getMainExecutor(this));
     }
 
+
     private void captureAndAnalyze() {
         if (imageCapture == null) {
             Toast.makeText(this, "Camera not ready.", Toast.LENGTH_SHORT).show();
@@ -248,9 +289,11 @@ public class ScanActivity extends AppCompatActivity {
         setStatus("Capturing image…");
         showLoading(true);
 
+
         File photoFile = new File(getCacheDir(), "scan_" + System.currentTimeMillis() + ".jpg");
         ImageCapture.OutputFileOptions options =
                 new ImageCapture.OutputFileOptions.Builder(photoFile).build();
+
 
         imageCapture.takePicture(options, ContextCompat.getMainExecutor(this),
                 new ImageCapture.OnImageSavedCallback() {
@@ -260,6 +303,7 @@ public class ScanActivity extends AppCompatActivity {
                         opts.inSampleSize = 1; // full resolution
                         Bitmap bitmap = BitmapFactory.decodeFile(photoFile.getAbsolutePath(), opts);
 
+
                         if (bitmap == null) {
                             showLoading(false);
                             Toast.makeText(ScanActivity.this,
@@ -267,9 +311,11 @@ public class ScanActivity extends AppCompatActivity {
                             return;
                         }
 
+
                         setStatus("Reading ingredients…");
                         runOcrWithFallback(bitmap);
                     }
+
 
                     @Override
                     public void onError(@NonNull ImageCaptureException e) {
@@ -279,6 +325,7 @@ public class ScanActivity extends AppCompatActivity {
                     }
                 });
     }
+
 
     /**
      * Two-pass OCR strategy:
@@ -291,6 +338,7 @@ public class ScanActivity extends AppCompatActivity {
             @Override
             public void onSuccess(String pass1Text) {
                 List<String> parsed = IngredientParser.parse(pass1Text);
+
 
                 if (parsed.size() >= MIN_CONFIDENT_INGREDIENTS) {
                     Log.d(TAG, "Pass 1 OCR confident: " + parsed.size() + " ingredients");
@@ -315,6 +363,7 @@ public class ScanActivity extends AppCompatActivity {
                 }
             }
 
+
             @Override
             public void onFailure(String error) {
                 showLoading(false);
@@ -323,6 +372,7 @@ public class ScanActivity extends AppCompatActivity {
             }
         });
     }
+
 
     /**
      * Inverts a bitmap's colors — helps when ingredients are printed on dark/colored backgrounds.
@@ -342,6 +392,7 @@ public class ScanActivity extends AppCompatActivity {
         return inv;
     }
 
+
     /**
      * After OCR is done: either show a preview/review dialog, or go straight to AI cleaning.
      * @param requiresReview  true when we didn't find enough ingredients and want the user to verify
@@ -353,15 +404,18 @@ public class ScanActivity extends AppCompatActivity {
             return;
         }
 
+
         String prodName = etProductName.getText().toString().trim();
         if (prodName.isEmpty()) prodName = "Unknown Product";
         final String finalProdName = prodName;
+
 
         if (requiresReview) {
             showLoading(false);
             showOcrReviewDialog(ocrText);
             return;
         }
+
 
         List<String> detected = IngredientParser.parse(ocrText);
         String preview = buildPreviewString(detected);
@@ -370,24 +424,30 @@ public class ScanActivity extends AppCompatActivity {
     private void showOcrPreviewDialog(String ocrText, String preview, String prodName) {
         showLoading(false);
 
+
         View view = getLayoutInflater().inflate(R.layout.dialog_custom_alert, null);
         AlertDialog dialog = new AlertDialog.Builder(this).setView(view).create();
+
 
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
         }
+
 
         TextView tvTitle = view.findViewById(R.id.tv_dialog_title);
         TextView tvMessage = view.findViewById(R.id.tv_dialog_message);
         Button btnNeg = view.findViewById(R.id.btn_dialog_negative);
         Button btnPos = view.findViewById(R.id.btn_dialog_positive);
 
+
         int count = IngredientParser.parse(ocrText).size();
         tvTitle.setText("Ingredients Detected");
         tvMessage.setText("Found " + count + " ingredients:\n\n" + preview + "\n\nDoes this look correct?");
 
+
         btnNeg.setText("Edit Manually");
         btnPos.setText("Yes, Analyze");
+
 
         btnNeg.setOnClickListener(v -> {
             dialog.dismiss();
@@ -395,10 +455,12 @@ public class ScanActivity extends AppCompatActivity {
             etIngredients.setText(ocrText);
         });
 
+
         btnPos.setOnClickListener(v -> {
             dialog.dismiss();
             showLoading(true);
             setStatus("Analyzing…");
+
 
             if (geminiClient.isApiKeyConfigured()) {
                 setStatus("AI cleaning text…");
@@ -419,8 +481,10 @@ public class ScanActivity extends AppCompatActivity {
             }
         });
 
+
         dialog.show();
     }
+
 
     private String buildPreviewString(List<String> ingredients) {
         int max = Math.min(ingredients.size(), 8);
@@ -434,6 +498,7 @@ public class ScanActivity extends AppCompatActivity {
         return sb.toString();
     }
 
+
     private void showOcrFailDialog() {
         View view = getLayoutInflater().inflate(R.layout.dialog_custom_alert, null);
         AlertDialog dialog = new AlertDialog.Builder(this).setView(view).create();
@@ -441,16 +506,20 @@ public class ScanActivity extends AppCompatActivity {
             dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
         }
 
+
         TextView tvTitle = view.findViewById(R.id.tv_dialog_title);
         TextView tvMessage = view.findViewById(R.id.tv_dialog_message);
         Button btnNeg = view.findViewById(R.id.btn_dialog_negative);
         Button btnPos = view.findViewById(R.id.btn_dialog_positive);
 
+
         tvTitle.setText("No Text Found");
         tvMessage.setText("We couldn't detect any ingredient text.\n\n• Hold the camera VERY close to the label\n• Make sure it's well-lit and in focus\n• Frame ONLY the ingredient list");
 
+
         btnNeg.setText("Manual Input");
         btnPos.setText("Try Again");
+
 
         btnNeg.setOnClickListener(v -> {
             dialog.dismiss();
@@ -458,8 +527,10 @@ public class ScanActivity extends AppCompatActivity {
         });
         btnPos.setOnClickListener(v -> dialog.dismiss());
 
+
         dialog.show();
     }
+
 
     private void showOcrReviewDialog(String text) {
         View view = getLayoutInflater().inflate(R.layout.dialog_custom_alert, null);
@@ -468,16 +539,20 @@ public class ScanActivity extends AppCompatActivity {
             dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
         }
 
+
         TextView tvTitle = view.findViewById(R.id.tv_dialog_title);
         TextView tvMessage = view.findViewById(R.id.tv_dialog_message);
         Button btnNeg = view.findViewById(R.id.btn_dialog_negative);
         Button btnPos = view.findViewById(R.id.btn_dialog_positive);
 
+
         tvTitle.setText("Review Detected Text");
         tvMessage.setText("We detected text — does this look like an ingredient list?\n\n" + text);
 
+
         btnNeg.setText("Edit Manually");
         btnPos.setText("Analyze");
+
 
         btnNeg.setOnClickListener(v -> {
             dialog.dismiss();
@@ -491,12 +566,15 @@ public class ScanActivity extends AppCompatActivity {
             processIngredientText(text, prodName, "camera");
         });
 
+
         dialog.show();
     }
+
 
     // ═══════════════════════════════════════════════════════════════════════════
     // MANUAL
     // ═══════════════════════════════════════════════════════════════════════════
+
 
     private void analyzeManualInput() {
         String productName     = etProductName.getText().toString().trim();
@@ -510,9 +588,11 @@ public class ScanActivity extends AppCompatActivity {
         processIngredientText(cleaned.isEmpty() ? ingredientsText : cleaned, productName, "manual");
     }
 
+
     // ═══════════════════════════════════════════════════════════════════════════
     // VOICE
     // ═══════════════════════════════════════════════════════════════════════════
+
 
     private void startVoiceInput() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
@@ -527,8 +607,10 @@ public class ScanActivity extends AppCompatActivity {
             return;
         }
 
+
         tvVoiceStatus.setText("Listening… say one or more ingredients, then pause");
         btnVoiceStart.setEnabled(false);
+
 
         voiceInputHelper.startListening(new VoiceInputHelper.VoiceCallback() {
             @Override
@@ -544,16 +626,19 @@ public class ScanActivity extends AppCompatActivity {
                 btnVoiceClear.setVisibility(View.VISIBLE);
             }
 
+
             @Override
             public void onError(String errorMessage) {
                 tvVoiceStatus.setText("Error: " + errorMessage + "\nTap the mic to try again.");
                 btnVoiceStart.setEnabled(true);
             }
 
+
             @Override
             public void onReadyForSpeech() {
                 tvVoiceStatus.setText("Ready — speak now!");
             }
+
 
             @Override
             public void onEndOfSpeech() {
@@ -561,6 +646,7 @@ public class ScanActivity extends AppCompatActivity {
             }
         });
     }
+
 
     private void analyzeVoiceInput() {
         if (TextUtils.isEmpty(capturedVoiceText)) {
@@ -572,7 +658,9 @@ public class ScanActivity extends AppCompatActivity {
         if (prodName.isEmpty()) prodName = "Unknown Product";
         final String finalProdName = prodName;
 
+
         showLoading(true);
+
 
         if (geminiClient.isApiKeyConfigured()) {
             geminiClient.formatVoiceInput(capturedVoiceText, new GeminiApiClient.AiCallback() {
@@ -590,15 +678,18 @@ public class ScanActivity extends AppCompatActivity {
         }
     }
 
+
     // ═══════════════════════════════════════════════════════════════════════════
     // CORE ANALYSIS
     // ═══════════════════════════════════════════════════════════════════════════
+
 
     private void processIngredientText(String rawText, String productName, String method) {
         showLoading(true);
         setStatus("Checking database…");
         String tempText = OcrTextCleaner.clean(rawText);
         final String finalText = tempText.isEmpty() ? rawText : tempText;
+
 
         List<String> ingredientNames = IngredientParser.parse(finalText);
         if (ingredientNames.isEmpty()) {
@@ -609,7 +700,9 @@ public class ScanActivity extends AppCompatActivity {
             return;
         }
 
+
         IngredientDatabase ingDb = IngredientDatabase.getInstance();
+
 
         List<String> missingIngredients = new ArrayList<>();
         for (String name : ingredientNames) {
@@ -618,12 +711,15 @@ public class ScanActivity extends AppCompatActivity {
             }
         }
 
+
         if (missingIngredients.isEmpty() || !geminiClient.isApiKeyConfigured()) {
             classifyAndFinish(ingredientNames, productName, method, finalText);
             return;
         }
 
-        setStatus("Researching " + missingIngredients.size() + " unknown ingredients…");
+
+        setStatus("Researching...");
+
 
         geminiClient.fetchMissingIngredientsData(missingIngredients, new GeminiApiClient.AiCallback() {
             @Override
@@ -632,8 +728,10 @@ public class ScanActivity extends AppCompatActivity {
                     jsonResult = jsonResult.replace("```json", "").replace("```", "").trim();
                     org.json.JSONArray newItems = new org.json.JSONArray(jsonResult);
 
+
                     for (int i = 0; i < newItems.length(); i++) {
                         org.json.JSONObject item = newItems.getJSONObject(i);
+
 
                         Ingredient.SafetyLevel level;
                         try {
@@ -641,6 +739,7 @@ public class ScanActivity extends AppCompatActivity {
                         } catch (Exception e) {
                             level = Ingredient.SafetyLevel.SAFE;
                         }
+
 
                         Ingredient newIng = new Ingredient(
                                 item.optString("name", "Unknown"),
@@ -650,23 +749,29 @@ public class ScanActivity extends AppCompatActivity {
                                 item.optString("risk_note", "None")
                         );
 
+
                         if (level == Ingredient.SafetyLevel.HARMFUL) newIng.setHazardScore(8);
                         else if (level == Ingredient.SafetyLevel.CAUTION) newIng.setHazardScore(4);
                         else newIng.setHazardScore(1);
 
+
                         newIng.setComedogenicRating(item.optInt("comedogenic_rating", 0));
                         newIng.setAllergenInfo("None");
+
 
                         ingDb.insertIngredient(newIng);
                     }
 
+
                     classifyAndFinish(ingredientNames, productName, method, finalText);
+
 
                 } catch (org.json.JSONException e) {
                     Log.e(TAG, "Failed to parse Gemini JSON: " + e.getMessage());
                     classifyAndFinish(ingredientNames, productName, method, finalText);
                 }
             }
+
 
             @Override
             public void onError(String error) {
@@ -675,6 +780,7 @@ public class ScanActivity extends AppCompatActivity {
             }
         });
     }
+
 
     /** * Helper method to finish the classification process
      * AFTER the database has been updated by Gemini.
@@ -685,17 +791,21 @@ public class ScanActivity extends AppCompatActivity {
         List<String> skinTypes    = user != null ? user.getSkinTypes()    : new ArrayList<>();
         List<String> skinConcerns = user != null ? user.getSkinConcerns() : new ArrayList<>();
 
+
         List<Ingredient> classified = classifier.classifyWithSkinProfile(ingredientNames, skinTypes, skinConcerns);
+
 
         ScanResult result = new ScanResult(productName, originalText, method);
         result.setUserId(session.getUserId());
         result.setIngredients(classified);
+
 
         List<String> concernNames = new ArrayList<>();
         for (Ingredient ing : classified) {
             if (ing.getSafetyLevel() != Ingredient.SafetyLevel.SAFE)
                 concernNames.add(ing.getName());
         }
+
 
         if (geminiClient.isApiKeyConfigured()) {
             setStatus("Generating AI insight…");
@@ -715,6 +825,7 @@ public class ScanActivity extends AppCompatActivity {
             saveAndNavigate(result);
         }
     }
+
 
     private String generateFallbackInsight(List<Ingredient> ingredients) {
         int safe = 0, caution = 0, harmful = 0;
@@ -744,12 +855,14 @@ public class ScanActivity extends AppCompatActivity {
                 + "This product looks like a good choice.";
     }
 
+
     private void saveAndNavigate(ScanResult result) {
         long scanId = dbHelper.saveScanResult(result);
         dbHelper.incrementScanCount(session.getUserId());
         result.setId((int) scanId);
         showLoading(false);
         voiceInputHelper.clearAccumulated();
+
 
         Intent intent = new Intent(this, ResultsActivity.class);
         intent.putExtra("scan_id",      (int) scanId);
@@ -759,9 +872,11 @@ public class ScanActivity extends AppCompatActivity {
         finish();
     }
 
+
     // ═══════════════════════════════════════════════════════════════════════════
     // UI HELPERS
     // ═══════════════════════════════════════════════════════════════════════════
+
 
     private void showLoading(boolean show) {
         progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
@@ -771,6 +886,7 @@ public class ScanActivity extends AppCompatActivity {
         if (!show) setStatus("");
     }
 
+
     private void setStatus(String message) {
         if (tvScanStatus != null) {
             tvScanStatus.setText(message);
@@ -778,11 +894,14 @@ public class ScanActivity extends AppCompatActivity {
         }
     }
 
+
     private void updateVoiceIngredientsUI() {
         LinearLayout llVoiceIngredients = findViewById(R.id.ll_voice_ingredients);
         llVoiceIngredients.removeAllViews();
 
+
         List<String> parsed = IngredientParser.parseVoiceInput(capturedVoiceText);
+
 
         if (parsed.isEmpty()) {
             layoutVoiceResult.setVisibility(View.GONE);
@@ -792,17 +911,21 @@ public class ScanActivity extends AppCompatActivity {
             return;
         }
 
+
         layoutVoiceResult.setVisibility(View.VISIBLE);
         btnVoiceAnalyze.setEnabled(true);
+
 
         for (int i = 0; i < parsed.size(); i++) {
             String ingredient = parsed.get(i);
             final int index = i;
 
+
             LinearLayout row = new LinearLayout(this);
             row.setOrientation(LinearLayout.HORIZONTAL);
             row.setPadding(0, 16, 0, 16);
             row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+
 
             TextView tvName = new TextView(this);
             tvName.setText("• " + ingredient);
@@ -810,6 +933,7 @@ public class ScanActivity extends AppCompatActivity {
             tvName.setTextSize(15f);
             tvName.setLayoutParams(new LinearLayout.LayoutParams(
                     0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
 
             TextView tvRemove = new TextView(this);
             tvRemove.setText("✕ Remove");
@@ -828,9 +952,11 @@ public class ScanActivity extends AppCompatActivity {
                 updateVoiceIngredientsUI();
             });
 
+
             row.addView(tvName);
             row.addView(tvRemove);
             llVoiceIngredients.addView(row);
+
 
             if (i < parsed.size() - 1) {
                 View divider = new View(this);
@@ -842,9 +968,11 @@ public class ScanActivity extends AppCompatActivity {
         }
     }
 
+
     // ═══════════════════════════════════════════════════════════════════════════
     // PERMISSIONS
     // ═══════════════════════════════════════════════════════════════════════════
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
@@ -866,6 +994,7 @@ public class ScanActivity extends AppCompatActivity {
                         Toast.LENGTH_LONG).show();
         }
     }
+
 
     @Override
     protected void onDestroy() {
